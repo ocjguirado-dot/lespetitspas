@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { ChildSummary, sectionLabels } from "@/components/staff/child-card";
 import { RetryChildrenButton } from "@/components/staff/retry-children-button";
 import { ChildTimeline, ChildTimelineLoading } from "@/components/staff/child-timeline";
+import { AddMealForm } from "@/components/staff/add-meal-form";
 import { createClient } from "@/lib/supabase/server";
 
 type FamilyMember = { parent_email: string; parent_id: string | null };
@@ -140,6 +141,8 @@ export async function ChildDetails({
           <p className="text-sm text-foreground">0</p>
         </Card>
       </div>
+
+      <AddMealForm childId={id} />
 
       <Suspense fallback={<ChildTimelineLoading />}>
         <ChildTimeline childId={id} searchParams={searchParams} />
