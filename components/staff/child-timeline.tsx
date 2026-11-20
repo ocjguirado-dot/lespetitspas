@@ -13,12 +13,14 @@ import { createClient } from "@/lib/supabase/server";
 
 type EventRow = {
   id: string;
+  author_id: string | null;
   type: string;
   details: unknown;
   note: string | null;
   created_at: string;
 };
 
+type AuthorProfile = { id: string; first_name: string | null };
 type Details = Record<string, unknown>;
 
 const eventLabels: Record<string, string> = {
@@ -177,13 +179,14 @@ export async function ChildTimeline({
     : today;
   const { start, end } = getParisDayInterval(date);
   let events: EventRow[] = [];
+  let authorNames = new Map<string, string>();
   let readFailed = false;
 
   try {
     const supabase = await createClient();
     const result = await supabase
       .from("events")
-      .select("id, type, details, note, created_at")
+      .select("id, author_id, type, details, note, created_at")
       .eq("child_id", childId)
       .gte("created_at", start.toISOString())
       .lt("created_at", end.toISOString())
@@ -191,6 +194,26 @@ export async function ChildTimeline({
       .order("id", { ascending: true });
     if (result.error) throw new Error("timeline-read");
     events = result.data as EventRow[];
+
+    const authorIds = [...new Set(events.flatMap((event) => event.author_id ? [event.author_id] : []))];
+    if (authorIds.length > 0) {
+      try {
+        const profilesResult = await supabase
+          .from("profiles")
+          .select("id, first_name")
+          .in("id", authorIds);
+        if (!profilesResult.error && profilesResult.data) {
+          authorNames = new Map(
+            (profilesResult.data as AuthorProfile[]).flatMap((profile) => {
+              const firstName = profile.first_name?.trim();
+              return firstName ? [[profile.id, firstName] as [string, string]] : [];
+            }),
+          );
+        }
+      } catch {
+        authorNames = new Map();
+      }
+    }
   } catch {
     readFailed = true;
   }
@@ -230,6 +253,9 @@ export async function ChildTimeline({
                   </div>
                   <div className="space-y-1 text-sm"><EventDetails event={event} /></div>
                   {event.note?.trim() ? <p className="whitespace-pre-wrap text-sm text-muted-foreground">{event.note.trim()}</p> : null}
+                  <p className="text-sm font-medium text-foreground">
+                    Saisi par {event.author_id ? authorNames.get(event.author_id) ?? "un membre de l'équipe" : "un membre de l'équipe"}
+                  </p>
                 </article>
               </li>
             ))}
