@@ -79,7 +79,7 @@ begin
   from (values
     ('Léa','Durand','repas','{"moment":"midi","qualite":"tout"}','Bon appétit'),
     ('Léa','Durand','sieste','{"debut":"13:00","fin":"14:30","qualite":"calme"}',null),
-    ('Léa','Durand','medicament','{"nom":"Sirop fictif","dose":"5 ml","heure":"12:00","autorisation_confirmee":"true"}','Médicament fictif de test'),
+    ('Léa','Durand','medicament','{"nom":"Sirop fictif","dose":"5 ml","heure":"12:00","autorisation_confirmee":true}','Médicament fictif de test'),
     ('Hugo','Durand','activite','{"nom":"Peinture"}','A adoré'),
     ('Hugo','Durand','incident','{"type":"chute","gravite":"leger"}','Chute sans gravité (fictif)'),
     ('Jade','Moreau','repas','{"moment":"gouter","qualite":"moitie"}',null),

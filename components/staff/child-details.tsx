@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { ChildSummary, sectionLabels } from "@/components/staff/child-card";
 import { RetryChildrenButton } from "@/components/staff/retry-children-button";
+import { ChildTimeline, ChildTimelineLoading } from "@/components/staff/child-timeline";
 import { createClient } from "@/lib/supabase/server";
 
 type FamilyMember = { parent_email: string; parent_id: string | null };
@@ -11,8 +13,10 @@ type ParentProfile = { id: string; first_name: string; last_name: string };
 
 export async function ChildDetails({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ date?: string | string[] }>;
 }) {
   const { id } = await params;
   await connection();
@@ -137,10 +141,9 @@ export async function ChildDetails({
         </Card>
       </div>
 
-      <Card className="items-start gap-2 border-dashed p-6">
-        <h2 className="font-heading text-lg font-semibold">Chronologie de la journée</h2>
-        <p className="text-sm text-muted-foreground">La chronologie de la journée arrive avec US-10.</p>
-      </Card>
+      <Suspense fallback={<ChildTimelineLoading />}>
+        <ChildTimeline childId={id} searchParams={searchParams} />
+      </Suspense>
     </div>
   );
 }

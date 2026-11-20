@@ -12,7 +12,7 @@ do $$
 declare
   v_staff uuid; v_p1 uuid; v_p2 uuid;
   v_lea uuid; v_hugo uuid; v_jade uuid;
-  n bigint; obs text;
+  n bigint; e bigint; obs text;
 begin
   select id into v_staff from public.profiles where email = 'oc.jguirado+staff@gmail.com';
   select id into v_p1    from public.profiles where email = 'oc.jguirado+parent1@gmail.com';
@@ -70,11 +70,12 @@ begin
   insert into resultats values ('P1-01', 'Parent 1 : enfants visibles', '2', n::text, case when n = 2 then 'OK' else 'KO' end);
 
   -- P1-02
+  select count(*) into e from (select 1 from public.events ev join public.family_members fm on fm.child_id = ev.child_id where fm.parent_id = v_p1) q;
   perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
   set local role authenticated;
   select count(*) into n from (select 1 from public.events) q;
   reset role;
-  insert into resultats values ('P1-02', 'Parent 1 : événements visibles (ses 2 enfants)', '5', n::text, case when n = 5 then 'OK' else 'KO' end);
+  insert into resultats values ('P1-02', 'Parent 1 : événements visibles (ceux de ses 2 enfants)', e::text || ' (calculé en administrateur)', n::text, case when n = e and e > 0 then 'OK' else 'KO' end);
 
   -- P1-03
   perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
@@ -133,11 +134,12 @@ begin
   insert into resultats values ('P2-01', 'Parent 2 : enfants visibles', '1', n::text, case when n = 1 then 'OK' else 'KO' end);
 
   -- P2-02
+  select count(*) into e from (select 1 from public.events ev join public.family_members fm on fm.child_id = ev.child_id where fm.parent_id = v_p2) q;
   perform set_config('request.jwt.claims', json_build_object('sub', v_p2::text, 'role', 'authenticated')::text, true);
   set local role authenticated;
   select count(*) into n from (select 1 from public.events) q;
   reset role;
-  insert into resultats values ('P2-02', 'Parent 2 : événements visibles', '2', n::text, case when n = 2 then 'OK' else 'KO' end);
+  insert into resultats values ('P2-02', 'Parent 2 : événements visibles (ceux de son enfant)', e::text || ' (calculé en administrateur)', n::text, case when n = e and e > 0 then 'OK' else 'KO' end);
 
   -- P2-03
   perform set_config('request.jwt.claims', json_build_object('sub', v_p2::text, 'role', 'authenticated')::text, true);
@@ -168,11 +170,12 @@ begin
   insert into resultats values ('S-01', 'Staff : enfants visibles', '30', n::text, case when n = 30 then 'OK' else 'KO' end);
 
   -- S-02
+  select count(*) into e from (select 1 from public.events) q;
   perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);
   set local role authenticated;
   select count(*) into n from (select 1 from public.events) q;
   reset role;
-  insert into resultats values ('S-02', 'Staff : événements visibles', '9', n::text, case when n = 9 then 'OK' else 'KO' end);
+  insert into resultats values ('S-02', 'Staff : événements visibles (tous)', e::text || ' (calculé en administrateur)', n::text, case when n = e and e > 0 then 'OK' else 'KO' end);
 
   -- S-03
   perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);

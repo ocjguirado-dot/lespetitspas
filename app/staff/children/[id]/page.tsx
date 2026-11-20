@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { ChildDetails } from "@/components/staff/child-details";
 import { ChildLoading } from "@/components/staff/child-loading";
 
-export default function ChildPage({ params }: PageProps<"/staff/children/[id]">) {
+export default function ChildPage({ params, searchParams }: PageProps<"/staff/children/[id]">) {
   return (
     <Suspense fallback={<ChildLoading />}>
-      <ChildDetails params={params} />
+      <ChildDetails params={params} searchParams={searchParams} />
     </Suspense>
   );
 }
