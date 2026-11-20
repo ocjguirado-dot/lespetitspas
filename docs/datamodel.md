@@ -91,7 +91,7 @@ La RLS est activée sur les 5 tables. Aucune politique n'existe pour un utilisat
 
 | Table | Parent | Staff |
 |---|---|---|
-| `profiles` | Lit son profil ; modifie prénom et nom (pas le rôle ni l'email) | Lit tous les profils |
+| `profiles` | Lit son profil et celui des auteurs des événements qui concernent ses enfants (affichage du prénom) ; modifie son prénom et son nom (pas le rôle ni l'email) | Lit tous les profils |
 | `children` | Lit uniquement ses enfants | Lit, crée, modifie |
 | `family_members` | Lit ses propres liens | Lit tous les liens |
 | `events` | Lit les événements de ses enfants | Lit tout ; crée (jamais de modification ni de suppression) |
@@ -116,9 +116,9 @@ Règles complémentaires :
 
 - 5 tables, RLS activée, 20 contraintes observées.
 - Trigger actif (`SECURITY DEFINER`, `search_path` vide).
-- 16 politiques ; droits par table et par colonne contrôlés.
+- 17 politiques (16 + 1 correctif de lecture des auteurs, script 06) ; droits par table et par colonne contrôlés.
 - 3 comptes de test (1 staff, 2 parents), 30 enfants fictifs, 9 événements, 4 messages.
-- Tests d'isolation en SQL (non connecté, parent 1, parent 2, staff) : 45 tests, 0 en échec.
+- Tests d'isolation en SQL (non connecté, parent 1, parent 2, staff) : 48 tests, 0 en échec (à reconfirmer sur la base après le script 06).
 
 ## Limites connues
 
@@ -128,4 +128,4 @@ Règles complémentaires :
 
 ## Scripts
 
-`01_tables.sql`, `02_auth_trigger.sql`, `03_rls.sql`, `04_donnees_test.sql`, `05_tests_isolation.sql` (à exécuter dans cet ordre dans le SQL Editor de Supabase).
+`01_tables.sql`, `02_auth_trigger.sql`, `03_rls.sql`, `06_rls_auteurs.sql`, `04_donnees_test.sql`, `05_tests_isolation.sql` (à exécuter dans cet ordre dans le SQL Editor de Supabase ; le script 06 corrige la lecture du prénom des auteurs d'événements).

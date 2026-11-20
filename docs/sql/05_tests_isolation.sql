@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Les Petits Pas - Phase 4, Étape 5 : tests d'isolation (RLS)
--- Cible : projet Supabase `lespetitspas` UNIQUEMENT. À lancer après 04_donnees_test.sql.
+-- Cible : projet Supabase `lespetitspas` UNIQUEMENT. À lancer après 04_donnees_test.sql et 06_rls_auteurs.sql.
 -- Chaque test se place dans la peau d'un utilisateur (non connecté, parent 1,
 -- parent 2, staff) et compare le résultat attendu au résultat observé.
 -- Les écritures de test sont annulées en fin de script. Une seule table de résultats est affichée.
@@ -109,7 +109,21 @@ begin
   set local role authenticated;
   select count(*) into n from (select 1 from public.profiles) q;
   reset role;
-  insert into resultats values ('P1-07', 'Parent 1 : profils visibles (le sien seulement)', '1', n::text, case when n = 1 then 'OK' else 'KO' end);
+  insert into resultats values ('P1-07', 'Parent 1 : profils visibles (le sien + auteurs des événements de ses enfants)', '2', n::text, case when n = 2 then 'OK' else 'KO' end);
+
+  -- P1-21
+  perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  select count(*) into n from (select 1 from public.profiles where role = 'staff' and first_name is not null) q;
+  reset role;
+  insert into resultats values ('P1-21', 'Parent 1 : prénom de l''auteur d''un événement lisible (staff)', '1', n::text, case when n = 1 then 'OK' else 'KO' end);
+
+  -- P1-22
+  perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  select count(*) into n from (select 1 from public.profiles where id = v_p2) q;
+  reset role;
+  insert into resultats values ('P1-22', 'Parent 1 : profil de l''autre parent non lisible', '0', n::text, case when n = 0 then 'OK' else 'KO' end);
 
   -- P2-01
   perform set_config('request.jwt.claims', json_build_object('sub', v_p2::text, 'role', 'authenticated')::text, true);
@@ -138,6 +152,13 @@ begin
   select count(*) into n from (select 1 from public.messages) q;
   reset role;
   insert into resultats values ('P2-04', 'Parent 2 : messages visibles', '2', n::text, case when n = 2 then 'OK' else 'KO' end);
+
+  -- P2-05
+  perform set_config('request.jwt.claims', json_build_object('sub', v_p2::text, 'role', 'authenticated')::text, true);
+  set local role authenticated;
+  select count(*) into n from (select 1 from public.profiles) q;
+  reset role;
+  insert into resultats values ('P2-05', 'Parent 2 : profils visibles (le sien + auteurs des événements de son enfant)', '2', n::text, case when n = 2 then 'OK' else 'KO' end);
 
   -- S-01
   perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);
