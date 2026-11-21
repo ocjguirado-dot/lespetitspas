@@ -1,7 +1,11 @@
+import { Suspense } from "react";
+import { ParentChildrenList } from "@/components/parent/parent-children-list";
+import { ParentChildrenLoading } from "@/components/parent/parent-loading";
+
 export default function ParentPage() {
   return (
-    <p className="text-muted-foreground">
-      Cet espace sera complété dans les prochaines étapes du projet.
-    </p>
+    <Suspense fallback={<ParentChildrenLoading />}>
+      <ParentChildrenList />
+    </Suspense>
   );
 }

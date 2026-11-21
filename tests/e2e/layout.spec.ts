@@ -51,3 +51,30 @@ test.describe("espace équipe", () => {
     await checkLayout(page, testInfo, "staff-message-detail");
   });
 });
+
+test.describe("espace parent", () => {
+  test.use({ storageState: AUTH.parent1 });
+
+  test.beforeAll(async () => {
+    await seedMessage(`${tag("layout-parent")} message pour contrôle d'affichage`);
+  });
+
+  test("liste des enfants", async ({ page }, testInfo) => {
+    await page.goto("/parent");
+    await expect(page.getByRole("heading", { name: "Mes enfants" })).toBeVisible();
+    await checkLayout(page, testInfo, "parent-liste");
+  });
+
+  test("timeline d'un enfant", async ({ page }, testInfo) => {
+    await page.goto(`/parent/children/${LEA_ID}`);
+    await expect(page.getByRole("heading", { name: "Journée de Léa" })).toBeVisible();
+    await checkLayout(page, testInfo, "parent-timeline");
+  });
+
+  test("messages : formulaire et historique", async ({ page }, testInfo) => {
+    await page.goto("/parent/messages");
+    await expect(page.getByRole("heading", { name: "Historique de mes messages" })).toBeVisible();
+    await page.getByLabel("Votre message").fill("x".repeat(501));
+    await checkLayout(page, testInfo, "parent-messages");
+  });
+});
