@@ -7,6 +7,7 @@ import { ChildSummary, sectionLabels } from "@/components/staff/child-card";
 import { RetryChildrenButton } from "@/components/staff/retry-children-button";
 import { ChildTimeline, ChildTimelineLoading } from "@/components/staff/child-timeline";
 import { AddEventForm } from "@/components/staff/add-event-form";
+import { UnreadMessageCount, UnreadMessageCountLoading } from "@/components/staff/unread-message-count";
 import { createClient } from "@/lib/supabase/server";
 
 type FamilyMember = { parent_email: string; parent_id: string | null };
@@ -137,8 +138,9 @@ export async function ChildDetails({
         </Card>
         <Card className="items-start gap-2 p-5">
           <h2 className="font-heading text-lg font-semibold">Messages non lus</h2>
-          {/* Le compteur reste provisoirement à zéro jusqu’au branchement prévu avec US-18. */}
-          <p className="text-sm text-foreground">0</p>
+          <Suspense fallback={<UnreadMessageCountLoading />}>
+            <UnreadMessageCount childId={id} />
+          </Suspense>
         </Card>
       </div>
 
