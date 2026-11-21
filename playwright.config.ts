@@ -19,6 +19,10 @@ loadEnvFile(".env.test.local");
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:3000";
 const isLocal = baseURL.startsWith("http://localhost");
 
+// Staging est protégé par Vercel (Deployment Protection) : le secret « Protection Bypass for
+// Automation » du projet Vercel, placé dans .env.test.local, laisse passer les tests automatisés.
+const vercelBypass = process.env.E2E_VERCEL_BYPASS;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   timeout: 60_000,
@@ -33,6 +37,9 @@ export default defineConfig({
   ],
   use: {
     baseURL,
+    extraHTTPHeaders: vercelBypass
+      ? { "x-vercel-protection-bypass": vercelBypass, "x-vercel-set-bypass-cookie": "true" }
+      : undefined,
     locale: "fr-FR",
     timezoneId: "Europe/Paris",
     trace: "retain-on-failure",
