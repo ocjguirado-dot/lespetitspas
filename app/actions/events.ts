@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { validateNapTimes } from "@/lib/events/nap.mjs";
 import { validateActivityName } from "@/lib/events/activity.mjs";
+import { validateIncident } from "@/lib/events/incident.mjs";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const eventTypes = ["repas", "sieste", "activite"] as const;
+const eventTypes = ["repas", "sieste", "activite", "incident"] as const;
 const mealMoments = ["matin", "midi", "gouter"] as const;
 const mealQualities = ["tout", "moitie", "peu", "rien"] as const;
 const napQualities = ["calme", "agitee", "reveil_precoce"] as const;
@@ -17,12 +18,13 @@ type MealMoment = (typeof mealMoments)[number];
 type MealQuality = (typeof mealQualities)[number];
 type NapQuality = (typeof napQualities)[number];
 type ActivityNameError = "required" | "too-long";
+type IncidentValidationError = "required" | "invalid";
 
 export type EventActionState = {
-  errors?: { type?: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; note?: string };
+  errors?: { type?: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; incident_type?: string; gravite?: string; note?: string };
   formError?: string;
   success?: string;
-  values?: { type: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; note: string };
+  values?: { type: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; incident_type?: string; gravite?: string; note: string };
   revision: number;
 };
 
@@ -40,6 +42,13 @@ function activityNameErrorMessage(error: ActivityNameError): string {
   return error === "required"
     ? "Saisissez le nom de l’activité."
     : "Le nom de l’activité ne peut pas dépasser 80 caractères.";
+}
+
+function incidentFieldErrorMessage(error: IncidentValidationError, field: "incident_type" | "gravite"): string {
+  if (field === "incident_type") {
+    return error === "required" ? "Choisissez un type d’incident." : "Choisissez un type d’incident parmi les options proposées.";
+  }
+  return error === "required" ? "Choisissez une gravité." : "Choisissez une gravité parmi les options proposées.";
 }
 
 export async function addEvent(
@@ -63,6 +72,8 @@ export async function addEvent(
   let rawDebut: FormDataEntryValue | null = null;
   let rawFin: FormDataEntryValue | null = null;
   let rawName: FormDataEntryValue | null = null;
+  let rawIncidentType: FormDataEntryValue | null = null;
+  let rawIncidentSeverity: FormDataEntryValue | null = null;
 
   if (submittedType === "repas") {
     rawMoment = formData.get("moment");
@@ -79,6 +90,11 @@ export async function addEvent(
   } else if (submittedType === "activite") {
     rawName = formData.get("nom");
     values.nom = typeof rawName === "string" ? rawName : "";
+  } else if (submittedType === "incident") {
+    rawIncidentType = formData.get("incident_type");
+    rawIncidentSeverity = formData.get("gravite");
+    values.incident_type = typeof rawIncidentType === "string" ? rawIncidentType : "";
+    values.gravite = typeof rawIncidentSeverity === "string" ? rawIncidentSeverity : "";
   }
 
   if (!UUID_PATTERN.test(childId)) {
@@ -90,6 +106,7 @@ export async function addEvent(
 
   let note: string | undefined;
   let activityName: string | undefined;
+  let incidentDetails: { type: string; gravite: string } | undefined;
   if (rawNote !== null && typeof rawNote !== "string") {
     errors.note = "La note doit être du texte.";
   } else if (typeof rawNote === "string") {
@@ -114,6 +131,15 @@ export async function addEvent(
     const nameResult = validateActivityName(typeof rawName === "string" ? rawName : "");
     if (!nameResult.valid) errors.nom = activityNameErrorMessage(nameResult.error);
     else activityName = nameResult.name;
+  } else if (rawType === "incident") {
+    const incidentResult = validateIncident(
+      typeof rawIncidentType === "string" ? rawIncidentType : "",
+      typeof rawIncidentSeverity === "string" ? rawIncidentSeverity : "",
+    );
+    if (!incidentResult.valid) {
+      if (incidentResult.errors.incident_type) errors.incident_type = incidentFieldErrorMessage(incidentResult.errors.incident_type, "incident_type");
+      if (incidentResult.errors.gravite) errors.gravite = incidentFieldErrorMessage(incidentResult.errors.gravite, "gravite");
+    } else incidentDetails = { type: incidentResult.type, gravite: incidentResult.gravite };
   }
 
   if (Object.keys(errors).length > 0) return { revision, values, errors };
@@ -133,9 +159,12 @@ export async function addEvent(
       fin: rawFin as string,
       qualite: rawQuality as NapQuality,
     };
-  } else {
+  } else if (rawType === "activite") {
     type = rawType as "activite";
     details = { nom: activityName as string };
+  } else {
+    type = rawType as "incident";
+    details = incidentDetails as Record<string, string>;
   }
 
   try {
@@ -172,7 +201,9 @@ export async function addEvent(
       ? "Repas enregistré. Il est daté d’aujourd’hui."
       : type === "sieste"
         ? "Sieste enregistrée. Elle est datée d’aujourd’hui."
-        : "Activité enregistrée. Elle est datée d’aujourd’hui.";
+        : type === "activite"
+          ? "Activité enregistrée. Elle est datée d’aujourd’hui."
+          : "Incident enregistré. Il est daté d’aujourd’hui.";
     return { revision, success };
   } catch {
     return { revision, values, formError: "L’événement n’a pas pu être enregistré. Réessayez." };

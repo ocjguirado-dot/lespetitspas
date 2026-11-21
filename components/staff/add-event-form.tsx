@@ -8,11 +8,13 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 const initialState: EventActionState = { revision: 0 };
-const emptyValues = { type: "repas", moment: "", qualite: "", debut: "", fin: "", nom: "", note: "" };
-const validTypes = ["repas", "sieste", "activite"];
+const emptyValues = { type: "repas", moment: "", qualite: "", debut: "", fin: "", nom: "", incident_type: "", gravite: "", note: "" };
+const validTypes = ["repas", "sieste", "activite", "incident"];
 const mealMoments = ["matin", "midi", "gouter"];
 const mealQualities = ["tout", "moitie", "peu", "rien"];
 const napQualities = ["calme", "agitee", "reveil_precoce"];
+const incidentTypes = ["chute", "morsure", "fievre", "autre"];
+const incidentSeverities = ["leger", "modere", "urgent"];
 const HH_MM_PATTERN = /^([01][0-9]|2[0-3]):[0-5][0-9]$/;
 
 type EventDraft = typeof emptyValues;
@@ -30,6 +32,8 @@ function valuesFromAction(values: NonNullable<EventActionState["values"]>): Even
     debut: type === "sieste" && HH_MM_PATTERN.test(values.debut ?? "") ? values.debut ?? "" : "",
     fin: type === "sieste" && HH_MM_PATTERN.test(values.fin ?? "") ? values.fin ?? "" : "",
     nom: type === "activite" ? values.nom ?? "" : "",
+    incident_type: type === "incident" ? allowedValue(values.incident_type ?? "", incidentTypes) : "",
+    gravite: type === "incident" ? allowedValue(values.gravite ?? "", incidentSeverities) : "",
     note: values.note,
   };
 }
@@ -84,6 +88,8 @@ export function AddEventForm({ childId }: { childId: string }) {
   const endTimeId = `nap-end-${childId}`;
   const napQualityId = `nap-quality-${childId}`;
   const activityNameId = `activity-name-${childId}`;
+  const incidentTypeId = `incident-type-${childId}`;
+  const incidentSeverityId = `incident-severity-${childId}`;
   const noteId = `event-note-${childId}`;
   const typeErrorId = `${typeId}-error`;
   const momentErrorId = `${momentId}-error`;
@@ -92,6 +98,8 @@ export function AddEventForm({ childId }: { childId: string }) {
   const endErrorId = `${endTimeId}-error`;
   const napQualityErrorId = `${napQualityId}-error`;
   const activityNameErrorId = `${activityNameId}-error`;
+  const incidentTypeErrorId = `${incidentTypeId}-error`;
+  const incidentSeverityErrorId = `${incidentSeverityId}-error`;
   const noteErrorId = `${noteId}-error`;
 
   return (
@@ -115,6 +123,7 @@ export function AddEventForm({ childId }: { childId: string }) {
               <option value="repas">Repas</option>
               <option value="sieste">Sieste</option>
               <option value="activite">Activité</option>
+              <option value="incident">Incident</option>
             </select>
             {displayedErrors?.type ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={typeErrorId} role="alert">{displayedErrors.type}</p> : null}
           </div>
@@ -218,7 +227,7 @@ export function AddEventForm({ childId }: { childId: string }) {
                 {displayedErrors?.qualite ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={napQualityErrorId} role="alert">{displayedErrors.qualite}</p> : null}
               </div>
             </div>
-          ) : (
+          ) : values.type === "activite" ? (
             <div className="grid gap-4">
               <div className="grid min-w-0 gap-2">
                 <Label htmlFor={activityNameId}>Nom de l&apos;activité</Label>
@@ -233,6 +242,49 @@ export function AddEventForm({ childId }: { childId: string }) {
                   value={values.nom}
                 />
                 {displayedErrors?.nom ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={activityNameErrorId} role="alert">{displayedErrors.nom}</p> : null}
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor={incidentTypeId}>Type d&apos;incident</Label>
+                <select
+                  aria-describedby={displayedErrors?.incident_type ? incidentTypeErrorId : undefined}
+                  aria-invalid={Boolean(displayedErrors?.incident_type)}
+                  aria-required="true"
+                  className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 sm:text-sm"
+                  id={incidentTypeId}
+                  name="incident_type"
+                  onChange={(event) => updateValue("incident_type", event.target.value)}
+                  value={values.incident_type}
+                >
+                  <option value="">Choisir un type d’incident</option>
+                  <option value="chute">Chute</option>
+                  <option value="morsure">Morsure</option>
+                  <option value="fievre">Fièvre</option>
+                  <option value="autre">Autre</option>
+                </select>
+                {displayedErrors?.incident_type ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={incidentTypeErrorId} role="alert">{displayedErrors.incident_type}</p> : null}
+              </div>
+
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor={incidentSeverityId}>Gravité</Label>
+                <select
+                  aria-describedby={displayedErrors?.gravite ? incidentSeverityErrorId : undefined}
+                  aria-invalid={Boolean(displayedErrors?.gravite)}
+                  aria-required="true"
+                  className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 sm:text-sm"
+                  id={incidentSeverityId}
+                  name="gravite"
+                  onChange={(event) => updateValue("gravite", event.target.value)}
+                  value={values.gravite}
+                >
+                  <option value="">Choisir une gravité</option>
+                  <option value="leger">Léger</option>
+                  <option value="modere">Modéré</option>
+                  <option value="urgent">Urgent</option>
+                </select>
+                {displayedErrors?.gravite ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={incidentSeverityErrorId} role="alert">{displayedErrors.gravite}</p> : null}
               </div>
             </div>
           )}
@@ -256,7 +308,7 @@ export function AddEventForm({ childId }: { childId: string }) {
           {state.success ? <p aria-live="polite" className="text-sm font-medium text-foreground" role="status">{state.success}</p> : null}
 
           <Button className="min-h-11 w-full sm:w-auto" disabled={pending} type="submit">
-            {pending ? "Enregistrement…" : values.type === "repas" ? "Enregistrer le repas" : values.type === "sieste" ? "Enregistrer la sieste" : "Enregistrer l’activité"}
+            {pending ? "Enregistrement…" : values.type === "repas" ? "Enregistrer le repas" : values.type === "sieste" ? "Enregistrer la sieste" : values.type === "activite" ? "Enregistrer l’activité" : "Enregistrer l’incident"}
           </Button>
         </form>
       </Card>
