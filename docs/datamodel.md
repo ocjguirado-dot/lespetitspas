@@ -109,6 +109,8 @@ Règles complémentaires :
 
 - **Une seule table `events`** pour 5 types : une chronologie unique par enfant, avec les champs propres à chaque type en `jsonb` validé par contrainte. Contrepartie : les champs ne sont pas des colonnes typées.
 - **`family_members` par email** : permet de rattacher un parent avant sa première connexion (invitation). `parent_id` est rempli à la connexion.
+- **Invitation parent (US-26)** : le serveur écrit le lien `family_members` avant de générer un token d'invitation. `on_auth_user_created` crée le profil parent et complète `parent_id`. Si l'adresse existe déjà sur un compte parent confirmé, le lien de l'enfant est ajouté au compte existant sans envoyer d'email. L'application construit `/auth/confirm` depuis `hashed_token`, puis le parent choisit un mot de passe sur `/auth/set-password`. C'est un écart validé à la spécification initiale qui supposait un écran natif Supabase de définition du mot de passe : aucun écran de ce type n'est fourni par Supabase Auth.
+- **Droits admin invitation** : `service_role` est utilisé uniquement dans `lib/supabase/admin.ts`. Le script `docs/sql/08_grants_invitation.sql` accorde uniquement `SELECT`, `INSERT` et `DELETE` sur `family_members`; il doit être relu puis appliqué manuellement. Il n'a pas été exécuté dans le cadre de cette tâche.
 - **Pas de statut « journée » stocké** : il se déduit des événements.
 - **Statut de message sans accent** (`traite`) pour éviter les problèmes d'encodage.
 
@@ -124,8 +126,9 @@ Règles complémentaires :
 
 - Tests joués en SQL avec rôles simulés : pas encore de test via l'application ni Playwright (Phases 6 et 8).
 - Production non configurée.
-- Le flux d'invitation des parents (email Resend) est prévu en Phase 7.
+- Le comportement de `auth.admin.generateLink({ type: "invite" })` pour un compte invité existant non confirmé n'est pas décrit explicitement dans la documentation consultée et reste à vérifier sur le projet de test. Aucun test Supabase ni envoi réel d'email n'a été effectué dans cette tâche.
+- La validité annoncée de 24 h dépend du réglage d'expiration des jetons d'invitation dans la configuration Auth Supabase ; ce réglage distant est à vérifier par l'équipe avant l'activation.
 
 ## Scripts
 
-`01_tables.sql`, `02_auth_trigger.sql`, `03_rls.sql`, `06_rls_auteurs.sql`, `04_donnees_test.sql`, `05_tests_isolation.sql` (à exécuter dans cet ordre dans le SQL Editor de Supabase ; le script 06 corrige la lecture du prénom des auteurs d'événements).
+`01_tables.sql`, `02_auth_trigger.sql`, `03_rls.sql`, `06_rls_auteurs.sql`, `04_donnees_test.sql`, `05_tests_isolation.sql` (à exécuter dans cet ordre dans le SQL Editor de Supabase ; le script 06 corrige la lecture du prénom des auteurs d'événements). Le script `08_grants_invitation.sql` est séparé et doit être relu puis appliqué manuellement pour activer les écritures `service_role` limitées sur `family_members`.

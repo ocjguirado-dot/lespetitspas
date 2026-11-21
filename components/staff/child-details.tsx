@@ -8,7 +8,9 @@ import { RetryChildrenButton } from "@/components/staff/retry-children-button";
 import { ChildTimeline, ChildTimelineLoading } from "@/components/staff/child-timeline";
 import { AddEventForm } from "@/components/staff/add-event-form";
 import { UnreadMessageCount, UnreadMessageCountLoading } from "@/components/staff/unread-message-count";
+import { ParentInvitationForm } from "@/components/staff/parent-invitation-form";
 import { createClient } from "@/lib/supabase/server";
+import { readParentAccountStatuses } from "@/lib/supabase/admin";
 
 type FamilyMember = { parent_email: string; parent_id: string | null };
 type ParentProfile = { id: string; first_name: string; last_name: string };
@@ -73,6 +75,8 @@ export async function ChildDetails({
   const fullName = `${child.first_name} ${child.last_name}`;
   const initials = `${child.first_name.trim().charAt(0)}${child.last_name.trim().charAt(0)}`.toLocaleUpperCase("fr-FR");
   const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
+  const linkedParentIds = [...new Set(familyMembers.flatMap((member) => member.parent_id ? [member.parent_id] : []))];
+  const parentAccountStatuses = await readParentAccountStatuses(linkedParentIds);
 
   return (
     <div className="space-y-6">
@@ -123,18 +127,25 @@ export async function ChildDetails({
           {familyMembers.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucun parent rattaché</p>
           ) : (
-            <ul className="space-y-2 text-sm">
+            <ul className="w-full space-y-3 text-sm">
               {familyMembers.map((member) => {
                 const profile = member.parent_id ? profilesById.get(member.parent_id) : undefined;
+                const accountStatus = member.parent_id ? parentAccountStatuses[member.parent_id] : "pending";
+                const statusLabel = accountStatus === "active" ? "Actif" : accountStatus === "pending" ? "En attente" : "Statut indisponible";
                 return (
-                  <li key={`${member.parent_email}-${member.parent_id ?? "pending"}`}>
+                  <li className="break-words" key={`${member.parent_email}-${member.parent_id ?? "pending"}`}>
                     {profile ? <span className="block font-medium">{profile.first_name} {profile.last_name}</span> : null}
                     <span>{member.parent_email}</span>
+                    <span className="mt-1 block text-muted-foreground">{statusLabel}</span>
+                    {accountStatus === "pending" ? (
+                      <ParentInvitationForm childId={id} initialEmail={member.parent_email} />
+                    ) : null}
                   </li>
                 );
               })}
             </ul>
           )}
+          <ParentInvitationForm childId={id} />
         </Card>
         <Card className="items-start gap-2 p-5">
           <h2 className="font-heading text-lg font-semibold">Messages non lus</h2>

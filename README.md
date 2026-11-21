@@ -12,6 +12,14 @@ Copiez `.env.example` vers `.env.local` en local et renseignez les valeurs depui
 
 Les valeurs de `.env.example` sont fictives et ne permettent aucun envoi.
 
+## Invitation d'un parent
+
+Depuis la fiche d'un enfant, un membre du staff peut rattacher une adresse email puis envoyer une invitation. Le serveur crée le lien `family_members` avant de demander à Supabase Auth un `hashed_token`; l'application construit ensuite `/auth/confirm` et envoie l'email avec Resend. Aucun mot de passe n'est envoyé. Après clic, le parent confirme explicitement le lien puis choisit son mot de passe dans `/auth/set-password`.
+
+Le rôle `parent` et le rattachement aux enfants sont créés par le trigger `on_auth_user_created`. Si l'adresse correspond déjà à un compte parent actif (par exemple pour une fratrie), l'enfant est rattaché à ce compte et aucun nouvel email n'est envoyé. Les pages de confirmation ne consomment pas le jeton lors du chargement : la vérification se fait au clic sur « Continuer ». Le chemin de redirection est limité à `/auth/set-password`.
+
+Avant d'activer les invitations, relire puis appliquer manuellement `docs/sql/08_grants_invitation.sql` afin que la clé `service_role` ait uniquement `SELECT`, `INSERT` et `DELETE` sur `public.family_members`. Ne jamais exécuter cette clé dans le navigateur. En Preview, les emails restent redirigés vers `EMAIL_TEST_RECIPIENT` par le module Resend existant. Le texte annonce une validité de 24 h : vérifier que la durée d'expiration des jetons d'invitation dans la configuration Auth Supabase est bien de 24 h, car l'application ne peut pas régler ni vérifier ce paramètre à l'exécution.
+
 ## Getting Started
 
 First, run the development server:
