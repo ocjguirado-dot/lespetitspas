@@ -1,5 +1,17 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Variables d’environnement
+
+Copiez `.env.example` vers `.env.local` en local et renseignez les valeurs depuis les environnements correspondants. Pour Vercel Preview, configurer :
+
+- `NEXT_PUBLIC_APP_URL` : URL de l’aperçu Preview.
+- `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` : projet Supabase local/staging.
+- `SUPABASE_SERVICE_ROLE_KEY` : clé serveur privée, jamais préfixée par `NEXT_PUBLIC_`.
+- `RESEND_API_KEY` et `EMAIL_FROM` : identifiants d’envoi Resend.
+- `EMAIL_TEST_RECIPIENT` : en Preview avec `onboarding@resend.dev`, adresse exacte du compte Resend autorisé ; ne pas utiliser un alias `+`.
+
+Les valeurs de `.env.example` sont fictives et ne permettent aucun envoi.
+
 ## Getting Started
 
 First, run the development server:
