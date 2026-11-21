@@ -33,7 +33,7 @@ test.describe("Parent Un (Léa et Hugo)", () => {
     await expect(item).toContainText(`${RUN} note`);
     await expect(item).toContainText("Saisi par Équipe");
 
-    await page.getByLabel("Jour").fill("2000-01-01");
+    await page.getByLabel("Jour", { exact: true }).fill("2000-01-01");
     await page.getByRole("button", { name: "Afficher" }).click();
     await expect(page).toHaveURL(/date=2000-01-01/);
     await expect(page.getByText("Aucun événement ce jour-là.")).toBeVisible();
