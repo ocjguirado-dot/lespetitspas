@@ -48,7 +48,7 @@ Ne pas ajouter de bibliothèque, de service payant ni de framework sans demander
 - **Cas à tester séparément** : utilisateur non connecté, parent autorisé, parent d'une autre famille, membre du staff.
 - **Rôle** : `profiles.role` n'est jamais modifiable depuis l'application.
 - **Données** : aucune donnée réelle d'enfant ou de famille dans les tests, les seeds ou les exemples. Aucune donnée médicale ou sensible dans le corps des emails.
-- **Destinations de test** : tout test pouvant envoyer un email ou créer une donnée externe utilise une destination de test explicitement identifiée. Avec l'expéditeur de test Resend (`onboarding@resend.dev`), seuls l'adresse du compte Resend et ses alias `+` reçoivent les emails. Aucun calendrier ni compte réel connecté. Avant le premier test d'une intégration, préciser l'environnement, le destinataire autorisé, les données fictives et le résultat attendu. Si la destination n'est pas identifiée, ne pas exécuter le test.
+- **Destinations de test** : tout test pouvant envoyer un email ou créer une donnée externe utilise une destination de test explicitement identifiée. Avec l'expéditeur de test Resend (`onboarding@resend.dev`), seul l'adresse exacte du compte Resend reçoit les emails (vérifié le 21/11/2026 : un alias `+` est refusé avec une erreur 403). Tant qu'aucun domaine n'est vérifié, tout email sortant est donc redirigé vers cette adresse via `EMAIL_TEST_RECIPIENT`. Aucun calendrier ni compte réel connecté. Avant le premier test d'une intégration, préciser l'environnement, le destinataire autorisé, les données fictives et le résultat attendu. Si la destination n'est pas identifiée, ne pas exécuter le test.
 
 ## Conventions de code
 
