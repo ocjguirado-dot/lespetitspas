@@ -110,3 +110,9 @@ export function formatParisTime(instant: string): string {
     hourCycle: "h23",
   }).format(new Date(instant));
 }
+
+/** Formats an instant as a Paris calendar date and time. */
+export function formatParisDateTime(instant: string): string {
+  const date = formatDateParts(getDateParts(new Date(instant)));
+  return `${formatParisDate(date)} · ${formatParisTime(instant)}`;
+}
