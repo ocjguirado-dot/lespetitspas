@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 const initialState: EventActionState = { revision: 0 };
-const emptyValues = { type: "repas", moment: "", qualite: "", debut: "", fin: "", nom: "", incident_type: "", gravite: "", note: "" };
-const validTypes = ["repas", "sieste", "activite", "incident"];
+const emptyValues = { type: "repas", moment: "", qualite: "", debut: "", fin: "", nom: "", dose: "", heure: "", incident_type: "", gravite: "", autorisation_confirmee: "", note: "" };
+const validTypes = ["repas", "sieste", "activite", "incident", "medicament"];
 const mealMoments = ["matin", "midi", "gouter"];
 const mealQualities = ["tout", "moitie", "peu", "rien"];
 const napQualities = ["calme", "agitee", "reveil_precoce"];
@@ -31,9 +31,12 @@ function valuesFromAction(values: NonNullable<EventActionState["values"]>): Even
     qualite: allowedValue(values.qualite ?? "", type === "repas" ? mealQualities : napQualities),
     debut: type === "sieste" && HH_MM_PATTERN.test(values.debut ?? "") ? values.debut ?? "" : "",
     fin: type === "sieste" && HH_MM_PATTERN.test(values.fin ?? "") ? values.fin ?? "" : "",
-    nom: type === "activite" ? values.nom ?? "" : "",
+    nom: type === "activite" || type === "medicament" ? values.nom ?? "" : "",
     incident_type: type === "incident" ? allowedValue(values.incident_type ?? "", incidentTypes) : "",
     gravite: type === "incident" ? allowedValue(values.gravite ?? "", incidentSeverities) : "",
+    dose: type === "medicament" ? values.dose ?? "" : "",
+    heure: type === "medicament" && HH_MM_PATTERN.test(values.heure ?? "") ? values.heure ?? "" : "",
+    autorisation_confirmee: type === "medicament" && values.autorisation_confirmee === "true" ? "true" : "",
     note: values.note,
   };
 }
@@ -90,6 +93,11 @@ export function AddEventForm({ childId }: { childId: string }) {
   const activityNameId = `activity-name-${childId}`;
   const incidentTypeId = `incident-type-${childId}`;
   const incidentSeverityId = `incident-severity-${childId}`;
+  const medicationNameId = `medication-name-${childId}`;
+  const medicationDoseId = `medication-dose-${childId}`;
+  const medicationTimeId = `medication-time-${childId}`;
+  const medicationAuthorizationId = `medication-authorization-${childId}`;
+  const medicationAuthorizationMessageId = `${medicationAuthorizationId}-message`;
   const noteId = `event-note-${childId}`;
   const typeErrorId = `${typeId}-error`;
   const momentErrorId = `${momentId}-error`;
@@ -100,6 +108,10 @@ export function AddEventForm({ childId }: { childId: string }) {
   const activityNameErrorId = `${activityNameId}-error`;
   const incidentTypeErrorId = `${incidentTypeId}-error`;
   const incidentSeverityErrorId = `${incidentSeverityId}-error`;
+  const medicationNameErrorId = `${medicationNameId}-error`;
+  const medicationDoseErrorId = `${medicationDoseId}-error`;
+  const medicationTimeErrorId = `${medicationTimeId}-error`;
+  const medicationAuthorizationErrorId = `${medicationAuthorizationId}-error`;
   const noteErrorId = `${noteId}-error`;
 
   return (
@@ -124,6 +136,7 @@ export function AddEventForm({ childId }: { childId: string }) {
               <option value="sieste">Sieste</option>
               <option value="activite">Activité</option>
               <option value="incident">Incident</option>
+              <option value="medicament">Médicament</option>
             </select>
             {displayedErrors?.type ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={typeErrorId} role="alert">{displayedErrors.type}</p> : null}
           </div>
@@ -244,7 +257,7 @@ export function AddEventForm({ childId }: { childId: string }) {
                 {displayedErrors?.nom ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={activityNameErrorId} role="alert">{displayedErrors.nom}</p> : null}
               </div>
             </div>
-          ) : (
+          ) : values.type === "incident" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid min-w-0 gap-2">
                 <Label htmlFor={incidentTypeId}>Type d&apos;incident</Label>
@@ -287,6 +300,76 @@ export function AddEventForm({ childId }: { childId: string }) {
                 {displayedErrors?.gravite ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={incidentSeverityErrorId} role="alert">{displayedErrors.gravite}</p> : null}
               </div>
             </div>
+          ) : (
+            <div className="grid gap-4">
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor={medicationNameId}>Nom du médicament</Label>
+                <input
+                  aria-describedby={displayedErrors?.nom ? medicationNameErrorId : undefined}
+                  aria-invalid={Boolean(displayedErrors?.nom)}
+                  aria-required="true"
+                  className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 sm:text-sm"
+                  id={medicationNameId}
+                  name="nom"
+                  onChange={(event) => updateValue("nom", event.target.value)}
+                  value={values.nom}
+                />
+                {displayedErrors?.nom ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={medicationNameErrorId} role="alert">{displayedErrors.nom}</p> : null}
+              </div>
+
+              <div className="grid min-w-0 gap-2 sm:grid-cols-2">
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor={medicationDoseId}>Dose</Label>
+                  <input
+                    aria-describedby={displayedErrors?.dose ? medicationDoseErrorId : undefined}
+                    aria-invalid={Boolean(displayedErrors?.dose)}
+                    aria-required="true"
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 sm:text-sm"
+                    id={medicationDoseId}
+                    name="dose"
+                    onChange={(event) => updateValue("dose", event.target.value)}
+                    value={values.dose}
+                  />
+                  {displayedErrors?.dose ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={medicationDoseErrorId} role="alert">{displayedErrors.dose}</p> : null}
+                </div>
+
+                <div className="grid min-w-0 gap-2">
+                  <Label htmlFor={medicationTimeId}>Heure</Label>
+                  <input
+                    aria-describedby={displayedErrors?.heure ? medicationTimeErrorId : undefined}
+                    aria-invalid={Boolean(displayedErrors?.heure)}
+                    aria-required="true"
+                    className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 sm:text-sm"
+                    id={medicationTimeId}
+                    name="heure"
+                    onChange={(event) => updateValue("heure", event.target.value)}
+                    step={60}
+                    type="time"
+                    value={values.heure}
+                  />
+                  {displayedErrors?.heure ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={medicationTimeErrorId} role="alert">{displayedErrors.heure}</p> : null}
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <div className="flex min-h-11 items-center gap-3">
+                  <input
+                    aria-describedby={displayedErrors?.autorisation_confirmee ? medicationAuthorizationErrorId : undefined}
+                    aria-invalid={Boolean(displayedErrors?.autorisation_confirmee)}
+                    className="size-5 shrink-0 rounded border-input accent-primary focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    id={medicationAuthorizationId}
+                    name="autorisation_confirmee"
+                    onChange={(event) => updateValue("autorisation_confirmee", event.target.checked ? "true" : "")}
+                    type="checkbox"
+                    value="true"
+                    checked={values.autorisation_confirmee === "true"}
+                  />
+                  <Label htmlFor={medicationAuthorizationId}>Autorisation parentale confirmée</Label>
+                </div>
+                {displayedErrors?.autorisation_confirmee ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={medicationAuthorizationErrorId} role="alert">{displayedErrors.autorisation_confirmee}</p> : null}
+                {values.autorisation_confirmee !== "true" ? <p className="text-sm text-muted-foreground" id={medicationAuthorizationMessageId}>Cochez l’autorisation parentale pour pouvoir enregistrer.</p> : null}
+              </div>
+            </div>
           )}
 
           <div className="grid gap-2">
@@ -307,8 +390,13 @@ export function AddEventForm({ childId }: { childId: string }) {
           {displayedFormError ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" role="alert">{displayedFormError}</p> : null}
           {state.success ? <p aria-live="polite" className="text-sm font-medium text-foreground" role="status">{state.success}</p> : null}
 
-          <Button className="min-h-11 w-full sm:w-auto" disabled={pending} type="submit">
-            {pending ? "Enregistrement…" : values.type === "repas" ? "Enregistrer le repas" : values.type === "sieste" ? "Enregistrer la sieste" : values.type === "activite" ? "Enregistrer l’activité" : "Enregistrer l’incident"}
+          <Button
+            aria-describedby={values.type === "medicament" && values.autorisation_confirmee !== "true" ? medicationAuthorizationMessageId : undefined}
+            className="min-h-11 w-full sm:w-auto"
+            disabled={pending || (values.type === "medicament" && values.autorisation_confirmee !== "true")}
+            type="submit"
+          >
+            {pending ? "Enregistrement…" : values.type === "repas" ? "Enregistrer le repas" : values.type === "sieste" ? "Enregistrer la sieste" : values.type === "activite" ? "Enregistrer l’activité" : values.type === "incident" ? "Enregistrer l’incident" : "Enregistrer le médicament"}
           </Button>
         </form>
       </Card>

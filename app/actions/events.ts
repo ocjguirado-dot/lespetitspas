@@ -4,11 +4,12 @@ import { revalidatePath } from "next/cache";
 import { validateNapTimes } from "@/lib/events/nap.mjs";
 import { validateActivityName } from "@/lib/events/activity.mjs";
 import { validateIncident } from "@/lib/events/incident.mjs";
+import { canRecordMedication, validateMedication } from "@/lib/events/medication.mjs";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const eventTypes = ["repas", "sieste", "activite", "incident"] as const;
+const eventTypes = ["repas", "sieste", "activite", "incident", "medicament"] as const;
 const mealMoments = ["matin", "midi", "gouter"] as const;
 const mealQualities = ["tout", "moitie", "peu", "rien"] as const;
 const napQualities = ["calme", "agitee", "reveil_precoce"] as const;
@@ -19,12 +20,14 @@ type MealQuality = (typeof mealQualities)[number];
 type NapQuality = (typeof napQualities)[number];
 type ActivityNameError = "required" | "too-long";
 type IncidentValidationError = "required" | "invalid";
+type MedicationValidationError = "required" | "too-long" | "format";
 
 export type EventActionState = {
-  errors?: { type?: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; incident_type?: string; gravite?: string; note?: string };
+  errors?: { type?: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; dose?: string; heure?: string; incident_type?: string; gravite?: string; autorisation_confirmee?: string; note?: string };
   formError?: string;
   success?: string;
-  values?: { type: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; incident_type?: string; gravite?: string; note: string };
+  status?: number;
+  values?: { type: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; dose?: string; heure?: string; incident_type?: string; gravite?: string; autorisation_confirmee?: string; note: string };
   revision: number;
 };
 
@@ -51,6 +54,21 @@ function incidentFieldErrorMessage(error: IncidentValidationError, field: "incid
   return error === "required" ? "Choisissez une gravité." : "Choisissez une gravité parmi les options proposées.";
 }
 
+function medicationFieldErrorMessage(error: MedicationValidationError, field: "nom" | "dose" | "heure" | "autorisation_confirmee"): string {
+  if (field === "nom") {
+    return error === "required"
+      ? "Saisissez le nom du médicament."
+      : "Le nom du médicament ne peut pas dépasser 80 caractères.";
+  }
+  if (field === "dose") {
+    return error === "required" ? "Saisissez la dose." : "La dose ne peut pas dépasser 40 caractères.";
+  }
+  if (field === "heure") {
+    return error === "required" ? "Saisissez l’heure du médicament." : "Saisissez une heure au format HH:MM (24 h).";
+  }
+  return "Confirmez l’autorisation parentale.";
+}
+
 export async function addEvent(
   childId: string,
   previousState: EventActionState,
@@ -74,6 +92,10 @@ export async function addEvent(
   let rawName: FormDataEntryValue | null = null;
   let rawIncidentType: FormDataEntryValue | null = null;
   let rawIncidentSeverity: FormDataEntryValue | null = null;
+  let rawMedicationName: FormDataEntryValue | null = null;
+  let rawMedicationDose: FormDataEntryValue | null = null;
+  let rawMedicationTime: FormDataEntryValue | null = null;
+  let rawAuthorization: FormDataEntryValue | null = null;
 
   if (submittedType === "repas") {
     rawMoment = formData.get("moment");
@@ -95,6 +117,15 @@ export async function addEvent(
     rawIncidentSeverity = formData.get("gravite");
     values.incident_type = typeof rawIncidentType === "string" ? rawIncidentType : "";
     values.gravite = typeof rawIncidentSeverity === "string" ? rawIncidentSeverity : "";
+  } else if (submittedType === "medicament") {
+    rawMedicationName = formData.get("nom");
+    rawMedicationDose = formData.get("dose");
+    rawMedicationTime = formData.get("heure");
+    rawAuthorization = formData.get("autorisation_confirmee");
+    values.nom = typeof rawMedicationName === "string" ? rawMedicationName : "";
+    values.dose = typeof rawMedicationDose === "string" ? rawMedicationDose : "";
+    values.heure = typeof rawMedicationTime === "string" ? rawMedicationTime : "";
+    values.autorisation_confirmee = typeof rawAuthorization === "string" ? rawAuthorization : "";
   }
 
   if (!UUID_PATTERN.test(childId)) {
@@ -107,6 +138,7 @@ export async function addEvent(
   let note: string | undefined;
   let activityName: string | undefined;
   let incidentDetails: { type: string; gravite: string } | undefined;
+  let medicationDetails: { nom: string; dose: string; heure: string; autorisation_confirmee: true } | undefined;
   if (rawNote !== null && typeof rawNote !== "string") {
     errors.note = "La note doit être du texte.";
   } else if (typeof rawNote === "string") {
@@ -140,12 +172,34 @@ export async function addEvent(
       if (incidentResult.errors.incident_type) errors.incident_type = incidentFieldErrorMessage(incidentResult.errors.incident_type, "incident_type");
       if (incidentResult.errors.gravite) errors.gravite = incidentFieldErrorMessage(incidentResult.errors.gravite, "gravite");
     } else incidentDetails = { type: incidentResult.type, gravite: incidentResult.gravite };
+  } else if (rawType === "medicament") {
+    const medicationResult = validateMedication(
+      typeof rawMedicationName === "string" ? rawMedicationName : "",
+      typeof rawMedicationDose === "string" ? rawMedicationDose : "",
+      typeof rawMedicationTime === "string" ? rawMedicationTime : "",
+      rawAuthorization,
+    );
+    if (!medicationResult.valid) {
+      if (medicationResult.errors.nom) errors.nom = medicationFieldErrorMessage(medicationResult.errors.nom, "nom");
+      if (medicationResult.errors.dose) errors.dose = medicationFieldErrorMessage(medicationResult.errors.dose, "dose");
+      if (medicationResult.errors.heure) errors.heure = medicationFieldErrorMessage(medicationResult.errors.heure, "heure");
+      if (medicationResult.errors.autorisation_confirmee) {
+        errors.autorisation_confirmee = medicationFieldErrorMessage(medicationResult.errors.autorisation_confirmee, "autorisation_confirmee");
+      }
+    } else {
+      medicationDetails = {
+        nom: medicationResult.nom,
+        dose: medicationResult.dose,
+        heure: medicationResult.heure,
+        autorisation_confirmee: true,
+      };
+    }
   }
 
   if (Object.keys(errors).length > 0) return { revision, values, errors };
 
   let type: EventType;
-  let details: Record<string, string>;
+  let details: Record<string, string | boolean>;
   if (rawType === "repas") {
     type = rawType;
     details = {
@@ -162,9 +216,12 @@ export async function addEvent(
   } else if (rawType === "activite") {
     type = rawType as "activite";
     details = { nom: activityName as string };
-  } else {
+  } else if (rawType === "incident") {
     type = rawType as "incident";
-    details = incidentDetails as Record<string, string>;
+    details = incidentDetails as Record<string, string | boolean>;
+  } else {
+    type = rawType as "medicament";
+    details = medicationDetails as Record<string, string | boolean>;
   }
 
   try {
@@ -175,13 +232,32 @@ export async function addEvent(
       return { revision, values, formError: "Votre session ne permet pas cet enregistrement. Reconnectez-vous puis réessayez." };
     }
 
-    const childResult = await supabase
-      .from("children")
-      .select("id")
-      .eq("id", childId)
-      .maybeSingle();
-    if (childResult.error || !childResult.data) {
-      return { revision, values, formError: "Impossible d’enregistrer un événement sur cette fiche." };
+    if (type === "medicament") {
+      const childResult = await supabase
+        .from("children")
+        .select("id, medication_authorized")
+        .eq("id", childId)
+        .maybeSingle();
+      if (childResult.error || !childResult.data) {
+        return { revision, values, formError: "Impossible d’enregistrer un événement sur cette fiche." };
+      }
+      if (!canRecordMedication(childResult.data.medication_authorized)) {
+        return {
+          revision,
+          values,
+          status: 403,
+          formError: "Enregistrement refusé : l’autorisation médicament de cet enfant n’est pas enregistrée.",
+        };
+      }
+    } else {
+      const childResult = await supabase
+        .from("children")
+        .select("id")
+        .eq("id", childId)
+        .maybeSingle();
+      if (childResult.error || !childResult.data) {
+        return { revision, values, formError: "Impossible d’enregistrer un événement sur cette fiche." };
+      }
     }
 
     const insertResult = await supabase.from("events").insert({
@@ -203,7 +279,9 @@ export async function addEvent(
         ? "Sieste enregistrée. Elle est datée d’aujourd’hui."
         : type === "activite"
           ? "Activité enregistrée. Elle est datée d’aujourd’hui."
-          : "Incident enregistré. Il est daté d’aujourd’hui.";
+        : type === "incident"
+          ? "Incident enregistré. Il est daté d’aujourd’hui."
+          : "Médicament enregistré. Il est daté d’aujourd’hui.";
     return { revision, success };
   } catch {
     return { revision, values, formError: "L’événement n’a pas pu être enregistré. Réessayez." };
