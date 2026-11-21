@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Fichiers générés par Playwright
+    "playwright-report/**",
+    "test-results/**",
+    ".auth/**",
   ]),
 ]);
 
