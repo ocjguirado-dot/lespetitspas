@@ -8,8 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 
 const initialState: EventActionState = { revision: 0 };
-const emptyValues = { type: "repas", moment: "", qualite: "", debut: "", fin: "", note: "" };
-const validTypes = ["repas", "sieste"];
+const emptyValues = { type: "repas", moment: "", qualite: "", debut: "", fin: "", nom: "", note: "" };
+const validTypes = ["repas", "sieste", "activite"];
 const mealMoments = ["matin", "midi", "gouter"];
 const mealQualities = ["tout", "moitie", "peu", "rien"];
 const napQualities = ["calme", "agitee", "reveil_precoce"];
@@ -29,6 +29,7 @@ function valuesFromAction(values: NonNullable<EventActionState["values"]>): Even
     qualite: allowedValue(values.qualite ?? "", type === "repas" ? mealQualities : napQualities),
     debut: type === "sieste" && HH_MM_PATTERN.test(values.debut ?? "") ? values.debut ?? "" : "",
     fin: type === "sieste" && HH_MM_PATTERN.test(values.fin ?? "") ? values.fin ?? "" : "",
+    nom: type === "activite" ? values.nom ?? "" : "",
     note: values.note,
   };
 }
@@ -82,6 +83,7 @@ export function AddEventForm({ childId }: { childId: string }) {
   const startTimeId = `nap-start-${childId}`;
   const endTimeId = `nap-end-${childId}`;
   const napQualityId = `nap-quality-${childId}`;
+  const activityNameId = `activity-name-${childId}`;
   const noteId = `event-note-${childId}`;
   const typeErrorId = `${typeId}-error`;
   const momentErrorId = `${momentId}-error`;
@@ -89,6 +91,7 @@ export function AddEventForm({ childId }: { childId: string }) {
   const startErrorId = `${startTimeId}-error`;
   const endErrorId = `${endTimeId}-error`;
   const napQualityErrorId = `${napQualityId}-error`;
+  const activityNameErrorId = `${activityNameId}-error`;
   const noteErrorId = `${noteId}-error`;
 
   return (
@@ -111,6 +114,7 @@ export function AddEventForm({ childId }: { childId: string }) {
             >
               <option value="repas">Repas</option>
               <option value="sieste">Sieste</option>
+              <option value="activite">Activité</option>
             </select>
             {displayedErrors?.type ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={typeErrorId} role="alert">{displayedErrors.type}</p> : null}
           </div>
@@ -158,7 +162,7 @@ export function AddEventForm({ childId }: { childId: string }) {
                 {displayedErrors?.qualite ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={mealQualityErrorId} role="alert">{displayedErrors.qualite}</p> : null}
               </div>
             </div>
-          ) : (
+          ) : values.type === "sieste" ? (
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid min-w-0 gap-2">
                 <Label htmlFor={startTimeId}>Heure de début</Label>
@@ -214,6 +218,23 @@ export function AddEventForm({ childId }: { childId: string }) {
                 {displayedErrors?.qualite ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={napQualityErrorId} role="alert">{displayedErrors.qualite}</p> : null}
               </div>
             </div>
+          ) : (
+            <div className="grid gap-4">
+              <div className="grid min-w-0 gap-2">
+                <Label htmlFor={activityNameId}>Nom de l&apos;activité</Label>
+                <input
+                  aria-describedby={displayedErrors?.nom ? activityNameErrorId : undefined}
+                  aria-invalid={Boolean(displayedErrors?.nom)}
+                  aria-required="true"
+                  className="min-h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-2 text-base text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 sm:text-sm"
+                  id={activityNameId}
+                  name="nom"
+                  onChange={(event) => updateValue("nom", event.target.value)}
+                  value={values.nom}
+                />
+                {displayedErrors?.nom ? <p className="border-s-2 border-destructive ps-2 text-sm font-medium text-foreground" id={activityNameErrorId} role="alert">{displayedErrors.nom}</p> : null}
+              </div>
+            </div>
           )}
 
           <div className="grid gap-2">
@@ -235,7 +256,7 @@ export function AddEventForm({ childId }: { childId: string }) {
           {state.success ? <p aria-live="polite" className="text-sm font-medium text-foreground" role="status">{state.success}</p> : null}
 
           <Button className="min-h-11 w-full sm:w-auto" disabled={pending} type="submit">
-            {pending ? "Enregistrement…" : values.type === "repas" ? "Enregistrer le repas" : "Enregistrer la sieste"}
+            {pending ? "Enregistrement…" : values.type === "repas" ? "Enregistrer le repas" : values.type === "sieste" ? "Enregistrer la sieste" : "Enregistrer l’activité"}
           </Button>
         </form>
       </Card>

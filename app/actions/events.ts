@@ -2,11 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { validateNapTimes } from "@/lib/events/nap.mjs";
+import { validateActivityName } from "@/lib/events/activity.mjs";
 import { requireRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const eventTypes = ["repas", "sieste"] as const;
+const eventTypes = ["repas", "sieste", "activite"] as const;
 const mealMoments = ["matin", "midi", "gouter"] as const;
 const mealQualities = ["tout", "moitie", "peu", "rien"] as const;
 const napQualities = ["calme", "agitee", "reveil_precoce"] as const;
@@ -15,12 +16,13 @@ type EventType = (typeof eventTypes)[number];
 type MealMoment = (typeof mealMoments)[number];
 type MealQuality = (typeof mealQualities)[number];
 type NapQuality = (typeof napQualities)[number];
+type ActivityNameError = "required" | "too-long";
 
 export type EventActionState = {
-  errors?: { type?: string; moment?: string; qualite?: string; debut?: string; fin?: string; note?: string };
+  errors?: { type?: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; note?: string };
   formError?: string;
   success?: string;
-  values?: { type: string; moment?: string; qualite?: string; debut?: string; fin?: string; note: string };
+  values?: { type: string; moment?: string; qualite?: string; debut?: string; fin?: string; nom?: string; note: string };
   revision: number;
 };
 
@@ -32,6 +34,12 @@ function napErrorMessage(error: "required" | "format" | "not-after-start", field
   if (error === "not-after-start") return "L’heure de fin doit être strictement après l’heure de début.";
   if (error === "required") return field === "debut" ? "Saisissez une heure de début." : "Saisissez une heure de fin.";
   return `Saisissez une heure ${field === "debut" ? "de début" : "de fin"} au format HH:MM (24 h).`;
+}
+
+function activityNameErrorMessage(error: ActivityNameError): string {
+  return error === "required"
+    ? "Saisissez le nom de l’activité."
+    : "Le nom de l’activité ne peut pas dépasser 80 caractères.";
 }
 
 export async function addEvent(
@@ -54,6 +62,7 @@ export async function addEvent(
   let rawQuality: FormDataEntryValue | null = null;
   let rawDebut: FormDataEntryValue | null = null;
   let rawFin: FormDataEntryValue | null = null;
+  let rawName: FormDataEntryValue | null = null;
 
   if (submittedType === "repas") {
     rawMoment = formData.get("moment");
@@ -67,6 +76,9 @@ export async function addEvent(
     values.debut = typeof rawDebut === "string" ? rawDebut : "";
     values.fin = typeof rawFin === "string" ? rawFin : "";
     values.qualite = typeof rawQuality === "string" ? rawQuality : "";
+  } else if (submittedType === "activite") {
+    rawName = formData.get("nom");
+    values.nom = typeof rawName === "string" ? rawName : "";
   }
 
   if (!UUID_PATTERN.test(childId)) {
@@ -77,6 +89,7 @@ export async function addEvent(
   if (!isOneOf(rawType, eventTypes)) errors.type = "Choisissez un type d’événement valide.";
 
   let note: string | undefined;
+  let activityName: string | undefined;
   if (rawNote !== null && typeof rawNote !== "string") {
     errors.note = "La note doit être du texte.";
   } else if (typeof rawNote === "string") {
@@ -97,6 +110,10 @@ export async function addEvent(
       if (timeResult.errors.fin) errors.fin = napErrorMessage(timeResult.errors.fin, "fin");
     }
     if (!isOneOf(rawQuality, napQualities)) errors.qualite = "Choisissez une qualité parmi les options proposées.";
+  } else if (rawType === "activite") {
+    const nameResult = validateActivityName(typeof rawName === "string" ? rawName : "");
+    if (!nameResult.valid) errors.nom = activityNameErrorMessage(nameResult.error);
+    else activityName = nameResult.name;
   }
 
   if (Object.keys(errors).length > 0) return { revision, values, errors };
@@ -109,13 +126,16 @@ export async function addEvent(
       moment: rawMoment as MealMoment,
       qualite: rawQuality as MealQuality,
     };
-  } else {
-    type = rawType as "sieste";
+  } else if (rawType === "sieste") {
+    type = rawType;
     details = {
       debut: rawDebut as string,
       fin: rawFin as string,
       qualite: rawQuality as NapQuality,
     };
+  } else {
+    type = rawType as "activite";
+    details = { nom: activityName as string };
   }
 
   try {
@@ -150,7 +170,9 @@ export async function addEvent(
     revalidatePath(`/staff/children/${childId}`);
     const success = type === "repas"
       ? "Repas enregistré. Il est daté d’aujourd’hui."
-      : "Sieste enregistrée. Elle est datée d’aujourd’hui.";
+      : type === "sieste"
+        ? "Sieste enregistrée. Elle est datée d’aujourd’hui."
+        : "Activité enregistrée. Elle est datée d’aujourd’hui.";
     return { revision, success };
   } catch {
     return { revision, values, formError: "L’événement n’a pas pu être enregistré. Réessayez." };
