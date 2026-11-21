@@ -4,9 +4,10 @@ import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { MessageStatusBadge } from "@/components/staff/message-status-badge";
 import { MarkMessageAsRead } from "@/components/staff/mark-message-as-read";
+import { MarkMessageAsProcessed } from "@/components/staff/mark-message-as-processed";
 import { RetryChildrenButton } from "@/components/staff/retry-children-button";
 import { formatParisDateTime } from "@/lib/dates";
-import { isUuid } from "@/lib/messages/status.mjs";
+import { isUuid, shouldMarkAsProcessed } from "@/lib/messages/status.mjs";
 import { createClient } from "@/lib/supabase/server";
 
 type MessageRow = {
@@ -98,6 +99,9 @@ export async function MessageDetails({ params }: { params: Promise<{ id: string 
           <div className="flex items-center gap-2">
             <MessageStatusBadge status={message.status} />
             <MarkMessageAsRead messageId={message.id} status={message.status} />
+            {shouldMarkAsProcessed(message.status) ? (
+              <MarkMessageAsProcessed messageId={message.id} />
+            ) : null}
           </div>
         </header>
         <p className="w-full whitespace-pre-wrap break-words text-sm text-foreground">{message.body}</p>
