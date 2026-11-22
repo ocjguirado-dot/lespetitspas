@@ -1,7 +1,7 @@
 # Modèle de données — Les Petits Pas
 
 Base : Supabase (PostgreSQL), projet `lespetitspas` (local + staging).
-Statut : implémenté et vérifié le 20/11/2026 sur ce projet. La production (`lespetitspas-prod`) n'a pas encore reçu ces scripts.
+Statut : modèle principal implémenté et vérifié le 20/11/2026 sur le projet. Le bonus `evening_books` est décrit par le script `09_evening_books.sql`, écrit mais non exécuté. La production (`lespetitspas-prod`) n'a pas encore reçu ces scripts.
 
 ## Schéma
 
@@ -14,6 +14,16 @@ erDiagram
     PROFILES ||--o{ EVENTS : "author_id (staff)"
     CHILDREN ||--o{ MESSAGES : "child_id"
     PROFILES ||--o{ MESSAGES : "author_id (parent)"
+
+    EVENING_BOOKS {
+        uuid id PK
+        date suggestion_date UK "une suggestion partagée par jour"
+        text title
+        text author
+        text cover_url
+        text open_library_key
+        timestamptz created_at
+    }
 
     PROFILES {
         uuid id PK "= auth.users.id"
@@ -68,6 +78,7 @@ erDiagram
 | `family_members` | Lien enfant ↔ parent | Unicité (`child_id`, `parent_email`) ; email en minuscules ; `parent_id` nul si le parent ne s'est pas encore connecté |
 | `events` | Journal de l'enfant (5 types) | `type` limité aux 5 valeurs ; contrainte `events_details_valid` : champs obligatoires et valeurs contrôlées selon le type |
 | `messages` | Messages parent → équipe | `body` de 1 à 500 caractères ; `status` limité à `nouveau` / `lu` / `traite` |
+| `evening_books` | Suggestion quotidienne partagée, sans lien avec un enfant ou une famille | `suggestion_date` unique ; `title` de 1 à 200 caractères ; auteur et couverture facultatifs |
 
 Contenu de `events.details` selon le type :
 
@@ -87,7 +98,7 @@ Contenu de `events.details` selon le type :
 
 ## Droits et RLS
 
-La RLS est activée sur les 5 tables. Aucune politique n'existe pour un utilisateur non connecté : il n'a aucun accès.
+La RLS est activée sur les 5 tables principales. Le script de bonus 09 activera aussi la RLS sur `evening_books`, avec une seule politique `SELECT` pour `authenticated` (`using (true)`). Aucune politique ne donne de lecture à `anon`; aucun droit d'écriture n'est accordé à `anon` ou `authenticated`.
 
 | Table | Parent | Staff |
 |---|---|---|
@@ -96,6 +107,7 @@ La RLS est activée sur les 5 tables. Aucune politique n'existe pour un utilisat
 | `family_members` | Lit ses propres liens | Lit tous les liens |
 | `events` | Lit les événements de ses enfants | Lit tout ; crée (jamais de modification ni de suppression) |
 | `messages` | Lit et crée les messages de ses enfants, en son nom, avec le statut `nouveau` | Lit tout ; modifie le statut uniquement |
+| `evening_books` (après script 09) | Lit la suggestion | Lit la suggestion |
 
 Règles complémentaires :
 - Aucun droit de suppression nulle part pour les utilisateurs connectés.
@@ -110,6 +122,7 @@ Règles complémentaires :
 - **Une seule table `events`** pour 5 types : une chronologie unique par enfant, avec les champs propres à chaque type en `jsonb` validé par contrainte. Contrepartie : les champs ne sont pas des colonnes typées.
 - **`family_members` par email** : permet de rattacher un parent avant sa première connexion (invitation). `parent_id` est rempli à la connexion.
 - **Invitation parent (US-26)** : le serveur écrit le lien `family_members` avant de générer un token d'invitation. `on_auth_user_created` crée le profil parent et complète `parent_id`. Si l'adresse existe déjà sur un compte parent confirmé, le lien de l'enfant est ajouté au compte existant sans envoyer d'email. L'application construit `/auth/confirm` depuis `hashed_token`, puis le parent choisit un mot de passe sur `/auth/set-password`. C'est un écart validé à la spécification initiale qui supposait un écran natif Supabase de définition du mot de passe : aucun écran de ce type n'est fourni par Supabase Auth.
+- **Livre du soir (BN-01 à BN-03)** : une ligne de `evening_books` est partagée par toutes les familles pour une date locale de Paris ; la table n'a aucune clé d'enfant ou de parent. La lecture passe par la session; seule la clé `service_role` serveur insère. Les scripts 09 et l'extension de 05 sont écrits mais non exécutés.
 - **Droits admin invitation** : `service_role` est utilisé uniquement dans `lib/supabase/admin.ts`. Le script `docs/sql/08_grants_invitation.sql` accorde uniquement `SELECT`, `INSERT` et `DELETE` sur `family_members`; il doit être relu puis appliqué manuellement. Il n'a pas été exécuté dans le cadre de cette tâche.
 - **Pas de statut « journée » stocké** : il se déduit des événements.
 - **Statut de message sans accent** (`traite`) pour éviter les problèmes d'encodage.
@@ -121,6 +134,7 @@ Règles complémentaires :
 - 17 politiques (16 + 1 correctif de lecture des auteurs, script 06) ; droits par table et par colonne contrôlés.
 - 3 comptes de test (1 staff, 2 parents), 30 enfants fictifs, 9 événements, 4 messages.
 - Tests d'isolation en SQL (non connecté, parent 1, parent 2, staff) : 48 tests, 0 en échec (à reconfirmer sur la base après le script 06).
+- Après extension du script 05 pour `evening_books`, le total attendu est de 57 tests (58 lignes affichées avec la ligne `ZZ-BILAN`) ; cette extension n'a pas été exécutée.
 
 ## Limites connues
 
@@ -131,4 +145,4 @@ Règles complémentaires :
 
 ## Scripts
 
-`01_tables.sql`, `02_auth_trigger.sql`, `03_rls.sql`, `06_rls_auteurs.sql`, `04_donnees_test.sql`, `05_tests_isolation.sql` (à exécuter dans cet ordre dans le SQL Editor de Supabase ; le script 06 corrige la lecture du prénom des auteurs d'événements). Le script `08_grants_invitation.sql` est séparé et doit être relu puis appliqué manuellement pour activer les écritures `service_role` limitées sur `family_members`.
+`01_tables.sql`, `02_auth_trigger.sql`, `03_rls.sql`, `06_rls_auteurs.sql`, `04_donnees_test.sql`, `05_tests_isolation.sql` (à exécuter dans cet ordre dans le SQL Editor de Supabase ; le script 06 corrige la lecture du prénom des auteurs d'événements). Le script `08_grants_invitation.sql` est séparé et doit être relu puis appliqué manuellement pour activer les écritures `service_role` limitées sur `family_members`. Pour le bonus, relire et appliquer `09_evening_books.sql` manuellement avant d'exécuter la version étendue de `05_tests_isolation.sql`.

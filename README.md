@@ -9,8 +9,11 @@ Copiez `.env.example` vers `.env.local` en local et renseignez les valeurs depui
 - `SUPABASE_SERVICE_ROLE_KEY` : clé serveur privée, jamais préfixée par `NEXT_PUBLIC_`.
 - `RESEND_API_KEY` et `EMAIL_FROM` : identifiants d’envoi Resend.
 - `EMAIL_TEST_RECIPIENT` : en Preview avec `onboarding@resend.dev`, adresse exacte du compte Resend autorisé ; ne pas utiliser un alias `+`.
+- `OPEN_LIBRARY_BASE_URL` : optionnelle, défaut `https://openlibrary.org`, utilisée par le bonus Livre du soir et remplaçable pour simuler une indisponibilité.
 
 Les valeurs de `.env.example` sont fictives et ne permettent aucun envoi.
+
+Le bonus « Livre du soir » et son cache quotidien sont décrits dans [docs/featurebonus.md](docs/featurebonus.md). Son script SQL reste à relire et à exécuter manuellement.
 
 ## Invitation d'un parent
 

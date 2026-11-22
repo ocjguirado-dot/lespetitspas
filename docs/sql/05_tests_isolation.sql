@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Les Petits Pas - Phase 4, Étape 5 : tests d'isolation (RLS)
--- Cible : projet Supabase `lespetitspas` UNIQUEMENT. À lancer après 04_donnees_test.sql et 06_rls_auteurs.sql.
+-- Cible : projet Supabase `lespetitspas` UNIQUEMENT. À lancer après 04_donnees_test.sql, 06_rls_auteurs.sql et 09_evening_books.sql.
 -- Chaque test se place dans la peau d'un utilisateur (non connecté, parent 1,
 -- parent 2, staff) et compare le résultat attendu au résultat observé.
 -- Les écritures de test sont annulées en fin de script. Une seule table de résultats est affichée.
@@ -12,6 +12,7 @@ do $$
 declare
   v_staff uuid; v_p1 uuid; v_p2 uuid;
   v_lea uuid; v_hugo uuid; v_jade uuid;
+  v_evening_test_date date; v_evening_parent_date date; v_evening_staff_date date;
   n bigint; e bigint; obs text;
 begin
   select id into v_staff from public.profiles where email = 'oc.jguirado+staff@gmail.com';
@@ -23,6 +24,19 @@ begin
   if v_staff is null or v_p1 is null or v_p2 is null or v_lea is null or v_hugo is null or v_jade is null then
     raise exception 'Comptes ou données de test manquants : lance d''abord 04_donnees_test.sql.';
   end if;
+
+  select date '1900-01-01' + candidate.day_offset into v_evening_test_date
+  from generate_series(0, 36500) as candidate(day_offset)
+  where not exists (
+    select 1 from public.evening_books eb
+    where eb.suggestion_date between date '1900-01-01' + candidate.day_offset
+                                  and date '1900-01-01' + candidate.day_offset + 2
+  )
+  limit 1;
+  v_evening_parent_date := v_evening_test_date + 1;
+  v_evening_staff_date := v_evening_test_date + 2;
+  insert into public.evening_books (suggestion_date, title, open_library_key)
+  values (v_evening_test_date, 'TEST-ISOLATION-EVENING-BOOK', 'TEST-ISOLATION-SEED');
 
   -- Contrôles de configuration (exécutés en tant qu''administrateur)
   insert into resultats values ('C-01', 'Trigger : profils créés pour les 3 comptes', '3',
@@ -61,6 +75,18 @@ begin
     obs := 'refusé (' || sqlstate || ')';
   end;
   insert into resultats values ('A-02', 'Non connecté : lecture des messages', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
+
+  -- A-03
+  begin
+    set local role anon;
+    perform 1 from public.evening_books;
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('A-03', 'Non connecté : lecture des suggestions du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
 
   -- P1-01
   perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
@@ -125,6 +151,59 @@ begin
   select count(*) into n from (select 1 from public.profiles where id = v_p2) q;
   reset role;
   insert into resultats values ('P1-22', 'Parent 1 : profil de l''autre parent non lisible', '0', n::text, case when n = 0 then 'OK' else 'KO' end);
+
+  -- P1-23
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into n from public.evening_books where suggestion_date = v_evening_test_date;
+    reset role;
+    obs := n || ' ligne(s), lecture autorisée';
+  exception when others then
+    reset role;
+    n := -1;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('P1-23', 'Parent 1 : lecture des suggestions du livre du soir', '1 ligne lisible', obs, case when n = 1 then 'OK' else 'KO' end);
+
+  -- P1-24
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.evening_books (suggestion_date, title, open_library_key) values (v_evening_parent_date, 'TEST-ISOLATION-EVENING-BOOK', 'TEST-ISOLATION-PARENT');
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('P1-24', 'Parent 1 : insérer une suggestion du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
+
+  -- P1-25
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.evening_books set title = 'TEST-ISOLATION-MODIFIED' where suggestion_date = v_evening_parent_date;
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('P1-25', 'Parent 1 : modifier une suggestion du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
+
+  -- P1-26
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_p1::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    delete from public.evening_books where suggestion_date = v_evening_parent_date;
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('P1-26', 'Parent 1 : supprimer une suggestion du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
 
   -- P2-01
   perform set_config('request.jwt.claims', json_build_object('sub', v_p2::text, 'role', 'authenticated')::text, true);
@@ -511,9 +590,63 @@ begin
   end;
   insert into resultats values ('S-15', 'Staff : changer le statut d''un message', '1 ligne', obs, case when n = 1 then 'OK' else 'KO' end);
 
+  -- S-16
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    select count(*) into n from public.evening_books where suggestion_date = v_evening_test_date;
+    reset role;
+    obs := n || ' ligne(s), lecture autorisée';
+  exception when others then
+    reset role;
+    n := -1;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('S-16', 'Staff : lecture des suggestions du livre du soir', '1 ligne lisible', obs, case when n = 1 then 'OK' else 'KO' end);
+
+  -- S-17
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    insert into public.evening_books (suggestion_date, title, open_library_key) values (v_evening_staff_date, 'TEST-ISOLATION-EVENING-BOOK', 'TEST-ISOLATION-STAFF');
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('S-17', 'Staff : insérer une suggestion du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
+
+  -- S-18
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    update public.evening_books set title = 'TEST-ISOLATION-MODIFIED' where suggestion_date = v_evening_staff_date;
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('S-18', 'Staff : modifier une suggestion du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
+
+  -- S-19
+  begin
+    perform set_config('request.jwt.claims', json_build_object('sub', v_staff::text, 'role', 'authenticated')::text, true);
+    set local role authenticated;
+    delete from public.evening_books where suggestion_date = v_evening_staff_date;
+    reset role;
+    obs := 'autorisé (anormal)';
+  exception when others then
+    reset role;
+    obs := 'refusé (' || sqlstate || ')';
+  end;
+  insert into resultats values ('S-19', 'Staff : supprimer une suggestion du livre du soir', 'refusé', obs, case when obs like 'refus%' then 'OK' else 'KO' end);
+
   -- Nettoyage des écritures de test (en tant qu''administrateur)
   delete from public.messages where body = 'TEST-ISOLATION';
   delete from public.events where note = 'TEST-ISOLATION';
+  delete from public.evening_books where title like 'TEST-ISOLATION%';
   update public.messages set status = 'nouveau' where body = 'Jade arrivera un peu plus tard demain.';
   update public.profiles set first_name = 'Parent' where id = v_p1;
 end;
@@ -521,7 +654,7 @@ $$;
 
 select id, test, attendu, observe, statut from pg_temp.resultats
 union all
-select 'ZZ-BILAN', 'Nombre de tests en échec (KO)', '0',
+select 'ZZ-BILAN', 'Nombre de tests en échec (KO, 57 tests)', '0',
        count(*) filter (where statut = 'KO')::text,
        case when count(*) filter (where statut = 'KO') = 0 then 'OK' else 'KO' end
 from pg_temp.resultats

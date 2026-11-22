@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Card } from "@/components/ui/card";
 import { RetryChildrenButton } from "@/components/staff/retry-children-button";
 import { ParentEventItem, type ParentEvent } from "@/components/parent/parent-event-item";
+import { EveningBook } from "@/components/parent/evening-book";
 import { formatParisDate, getParisDayInterval, getTodayInParis, isValidDateInput } from "@/lib/dates";
 import { isUuid } from "@/lib/messages/status.mjs";
 import { createClient } from "@/lib/supabase/server";
@@ -150,6 +151,7 @@ export async function ParentChildTimeline({ params, searchParams }: TimelinePara
           </ol>
         )}
       </Card>
+      {date === today ? <EveningBook /> : null}
     </section>
   );
 }

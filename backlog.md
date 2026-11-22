@@ -80,9 +80,9 @@
 
 | ID | User Story | Entité | Critères d'acceptation | Statut | Contraintes / Dépendances | Description technique |
 | --- | --- | --- | --- | --- | --- | --- |
-| BN-01 | En tant que parent, je veux voir un livre suggéré pour la soirée afin de prolonger la journée de mon enfant. | stockage en base à définir | Un encart sur la timeline parent affiche couverture, titre, auteur. | À faire | Ne démarre qu'après le MVP. API Open Library, sans clé. Stockage en base à confirmer avec le sujet. | Appel serveur à Open Library, composant dédié. |
-| BN-02 | En tant que parent, je veux un message clair si la suggestion est indisponible afin de ne pas voir d'erreur. | — | Si l'API ne répond pas, l'encart affiche « Suggestion indisponible » et le reste de la page fonctionne. | À faire | Dépend de BN-01. | Gestion d'erreur, délai maximal d'attente. |
-| BN-03 | En tant que chef de projet, je veux documenter le bonus afin de le présenter en soutenance. | — | Le fichier `docs/featurebonus.md` décrit l'écran, le stockage, le composant et les limites. | À faire | Dépend de BN-01. | Documentation dans `docs/featurebonus.md`. |
+| BN-01 | En tant que parent, je veux voir un livre suggéré pour la soirée afin de prolonger la journée de mon enfant. | `evening_books` | Un encart sur la timeline parent affiche couverture, titre, auteur. | En cours | API Open Library sans clé. Décision validée le 21/11/2026 : une suggestion par jour, partagée entre toutes les familles, jour calculé à Paris. | Appel serveur générique à Open Library, cache en base, composant dédié. |
+| BN-02 | En tant que parent, je veux un message clair si la suggestion est indisponible afin de ne pas voir d'erreur. | `evening_books` | Si l'API ne répond pas, l'encart affiche « Suggestion indisponible » et le reste de la page fonctionne. | En cours | Dépend de BN-01. Délai maximal : 3 secondes ; `OPEN_LIBRARY_BASE_URL` facultative pour simuler une panne. | Gestion d'erreur non bloquante, timeout, tests avec fetch simulé. |
+| BN-03 | En tant que chef de projet, je veux documenter le bonus afin de le présenter en soutenance. | `evening_books` | Le fichier `docs/featurebonus.md` décrit l'écran, le stockage, le composant et les limites. | En cours | Dépend de BN-01. | Documentation dans `docs/featurebonus.md`. |
 
 ---
 
@@ -95,4 +95,4 @@
 - **Extrait dans l'email staff (US-28) :** la spécification exige à la fois un extrait du message et l'absence de donnée sensible. **Décision validée (17/11/2026) : option C**, extrait court plus avertissement dans le formulaire parent (US-24), documenté comme limite connue. Longueur de l'extrait (80 caractères) : proposition. À re-vérifier si la page source officielle formule l'exigence autrement.
 - **Historique parent (US-25) :** hypothèse « mes messages » (auteur). À confirmer avec la source.
 - **Protection médicament en base (US-16) :** à arbitrer en Phase 4 (RLS ou trigger en complément de la Server Action).
-- **Stockage du bonus (BN-01) :** à confirmer avec le sujet avant de démarrer le bonus.
+- **Stockage du bonus (BN-01) :** décision validée le 21/11/2026 ; cache quotidien partagé dans `public.evening_books`, sans donnée liée à un enfant. Le SQL reste à relire puis à exécuter par l'équipe.

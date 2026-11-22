@@ -176,3 +176,35 @@ export async function generateParentInvitation(email: string): Promise<Invitatio
     return { status: "error" };
   }
 }
+
+export type EveningBookInsert = {
+  suggestion_date: string;
+  title: string;
+  author: string | null;
+  cover_url: string | null;
+  open_library_key: string;
+};
+
+export type EveningBookInsertResult =
+  | { status: "inserted" }
+  | { status: "exists" }
+  | { status: "not-configured"; code: "supabase-admin-config-missing" }
+  | { status: "error"; code: "evening-book-insert-failed" };
+
+/** Inserts a shared daily suggestion with service_role; a date conflict is an expected race. */
+export async function insertEveningBookIfAbsent(book: EveningBookInsert): Promise<EveningBookInsertResult> {
+  const supabase = createAdminClient();
+  if (!supabase) return { status: "not-configured", code: "supabase-admin-config-missing" };
+
+  try {
+    const result = await supabase
+      .from("evening_books")
+      .upsert(book, { onConflict: "suggestion_date", ignoreDuplicates: true })
+      .select("suggestion_date")
+      .maybeSingle();
+    if (result.error) return { status: "error", code: "evening-book-insert-failed" };
+    return result.data ? { status: "inserted" } : { status: "exists" };
+  } catch {
+    return { status: "error", code: "evening-book-insert-failed" };
+  }
+}
