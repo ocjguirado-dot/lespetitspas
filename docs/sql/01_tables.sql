@@ -1,7 +1,6 @@
 -- =====================================================================
 -- Les Petits Pas - Phase 4, Étape 2 : création des tables
--- Cible : projet Supabase `lespetitspas` (local + staging) UNIQUEMENT.
--- Ne pas exécuter sur `lespetitspas-prod` pour l'instant.
+-- Cible : `lespetitspas` (local + staging), puis `lespetitspas-prod` via 10_prod_install.sql (US-33).
 -- Contenu : 5 tables, contraintes, index, RLS activée (sans politique).
 -- Hors périmètre ici : trigger de profil (Étape 3), politiques RLS (Étape 4),
 -- données de test (Étape 5).

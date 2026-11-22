@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Les Petits Pas - Phase 4, Étape 4 : politiques RLS + droits d'accès
--- Cible : projet Supabase `lespetitspas` (local + staging) UNIQUEMENT.
+-- Cible : `lespetitspas` (local + staging), puis `lespetitspas-prod` via 10_prod_install.sql (US-33).
 -- Décisions validées le 20/11/2026 :
 --   * events : le staff peut créer, jamais modifier ni supprimer
 --   * profiles : le parent peut modifier prénom et nom, pas rôle ni email

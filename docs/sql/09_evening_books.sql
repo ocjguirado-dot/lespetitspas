@@ -1,6 +1,5 @@
 -- Les Petits Pas — bonus « Livre du soir ».
--- Cible : projet Supabase `lespetitspas` (local + staging) UNIQUEMENT.
--- Écrit pour relecture ; ne pas exécuter sur une base sans validation.
+-- Cible : `lespetitspas` (local + staging), puis `lespetitspas-prod` via 10_prod_install.sql (US-33).
 
 create table if not exists public.evening_books (
   id uuid primary key default gen_random_uuid(),

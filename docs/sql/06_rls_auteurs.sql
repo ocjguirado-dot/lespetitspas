@@ -4,7 +4,7 @@
 -- Constat : avec 03_rls.sql, un parent ne lit que son propre profil.
 -- Correctif : un utilisateur connecté peut lire le profil d'un auteur d'événement
 -- seulement si cet événement lui est visible (donc, pour un parent, concernant ses enfants).
--- Cible : projet Supabase `lespetitspas` UNIQUEMENT.
+-- Cible : `lespetitspas` (local + staging), puis `lespetitspas-prod` via 10_prod_install.sql (US-33).
 -- =====================================================================
 create policy profiles_select_event_authors on public.profiles
   for select to authenticated

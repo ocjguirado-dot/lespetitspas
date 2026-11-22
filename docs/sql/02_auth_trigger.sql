@@ -1,6 +1,6 @@
 -- =====================================================================
 -- Les Petits Pas - Phase 4, Étape 3 : trigger de création du profil
--- Cible : projet Supabase `lespetitspas` (local + staging) UNIQUEMENT.
+-- Cible : `lespetitspas` (local + staging), puis `lespetitspas-prod` via 10_prod_install.sql (US-33).
 -- Règles :
 --  * Tout nouveau compte reçoit TOUJOURS le rôle 'parent' (jamais lu depuis
 --    les métadonnées envoyées par l'utilisateur : sinon, élévation de droits).
