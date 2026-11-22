@@ -38,9 +38,6 @@ jobs:
       - name: Lint
         run: pnpm lint
 
-      - name: Typage TypeScript
-        run: pnpm exec tsc --noEmit
-
       - name: Build
         run: pnpm build
         env:
@@ -48,3 +45,7 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
           NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+
+      # Après le build : Next y génère les types globaux (PageProps, LayoutProps) que tsc exige.
+      - name: Typage TypeScript
+        run: pnpm exec tsc --noEmit
