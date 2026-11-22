@@ -2,9 +2,11 @@ import { createClient } from "@supabase/supabase-js";
 import { randomUUID } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 
-export const LEA_ID = "4ae88cb7-27ef-4eab-ad19-876e25dbc123"; // autorisée pour les médicaments
-export const HUGO_ID = "4b3b0d2b-971a-48fb-8bfb-d9cebd02eb46"; // non autorisé
-export const JADE_ID = "c968bea7-14fe-4ed9-a0b1-7470e1d36a29"; // enfant de Parent Deux
+// Identifiants des enfants fictifs. Valeurs de staging par défaut ; en production (autre base,
+// autres UUID), les définir via E2E_LEA_ID, E2E_HUGO_ID et E2E_JADE_ID.
+export const LEA_ID = process.env.E2E_LEA_ID ?? "4ae88cb7-27ef-4eab-ad19-876e25dbc123"; // autorisée pour les médicaments
+export const HUGO_ID = process.env.E2E_HUGO_ID ?? "4b3b0d2b-971a-48fb-8bfb-d9cebd02eb46"; // non autorisé
+export const JADE_ID = process.env.E2E_JADE_ID ?? "c968bea7-14fe-4ed9-a0b1-7470e1d36a29"; // enfant de Parent Deux
 export const AUTH = {
   staff: ".auth/staff.json",
   parent1: ".auth/parent1.json",
