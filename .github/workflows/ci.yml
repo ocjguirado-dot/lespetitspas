@@ -1,0 +1,51 @@
+# Contrôles automatiques à chaque push et à chaque Pull Request : tests unitaires, lint,
+# typage et build. Aucun secret n'est utilisé : le build reçoit des valeurs publiques fictives.
+# Les tests Playwright (qui exigent des comptes et des clés) sont dans playwright.yml, en lancement manuel.
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      # La version de pnpm est lue dans le champ "packageManager" de package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Installer les dépendances
+        run: pnpm install --frozen-lockfile
+
+      - name: Tests unitaires
+        run: node --test "lib/**/*.test.mjs"
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+        env:
+          # Valeurs publiques fictives : le build ne contacte pas Supabase.
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+
+      # Après le build : Next y génère les types globaux (PageProps, LayoutProps) que tsc exige.
+      - name: Typage TypeScript
+        run: pnpm exec tsc --noEmit
