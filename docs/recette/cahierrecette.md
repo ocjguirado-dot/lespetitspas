@@ -1,6 +1,6 @@
 # Cahier de recette — Les Petits Pas
 
-Version du 22/11/2026. Dépôt : branche `staging`, commit de référence `bcf84f1` (le cahier lui-même est ajouté ensuite).
+Version du 22/11/2026 (colonne Production : contrôles manuels du 22/11/2026, 7 cas). Dépôt : branche `staging`, commit de référence `bcf84f1` (le cahier lui-même est ajouté ensuite).
 
 ## Règles de lecture
 
@@ -16,9 +16,9 @@ Version du 22/11/2026. Dépôt : branche `staging`, commit de référence `bcf84
 | ID | US | Objectif | Prérequis | Étapes | Résultat attendu | Résultat obtenu (staging, 22/11/2026) | Preuve | Production |
 |---|---|---|---|---|---|---|---|---|
 | R-01 | US-01, US-03 | Un visiteur non connecté est renvoyé vers la connexion | Aucune session | Ouvrir `/staff`, `/staff/messages`, la fiche de Léa, `/parent`, `/` | Redirection vers `/login` à chaque fois | Conforme | Playwright `access.spec.ts` | À exécuter |
-| R-02 | US-02 | Identifiants invalides | Aucune session | Saisir un email et un mot de passe faux | Erreur explicite, aucune session créée | Conforme | Playwright `access.spec.ts` | À exécuter |
-| R-03 | US-01 | Le staff est dirigé vers son espace | Compte staff | Ouvrir `/login`, `/parent`, `/` | Redirection vers `/staff` | Conforme | Playwright `access.spec.ts` | À exécuter |
-| R-04 | US-01, US-31 | Un parent ne peut pas ouvrir l'espace équipe | Compte Parent Un | Ouvrir `/staff`, `/staff/messages`, une fiche enfant, un message équipe | Redirection vers `/parent` ; `/` mène à `/parent` | Conforme | Playwright `access.spec.ts` | À exécuter |
+| R-02 | US-02 | Identifiants invalides | Aucune session | Saisir un email et un mot de passe faux | Erreur explicite, aucune session créée | Conforme | Playwright `access.spec.ts` | Conforme (manuel, 22/11/2026) : mauvais mot de passe, erreur affichée, pas de session ; déclaré sans capture |
+| R-03 | US-01 | Le staff est dirigé vers son espace | Compte staff | Ouvrir `/login`, `/parent`, `/` | Redirection vers `/staff` | Conforme | Playwright `access.spec.ts` | Partiel (manuel, 22/11/2026) : connexion du compte staff arrivée sur `/staff` ; `/login`, `/parent`, `/` non rejoués ; déclaré sans capture |
+| R-04 | US-01, US-31 | Un parent ne peut pas ouvrir l'espace équipe | Compte Parent Un | Ouvrir `/staff`, `/staff/messages`, une fiche enfant, un message équipe | Redirection vers `/parent` ; `/` mène à `/parent` | Conforme | Playwright `access.spec.ts` | Partiel (manuel, 22/11/2026) : Parent Un ouvre `/staff`, redirigé vers `/parent` ; autres URL non rejouées ; déclaré sans capture |
 | R-05 | US-29 | Pages d'erreur 404 propres | Compte staff | Ouvrir `/staff/messages/abc`, `/staff/children/abc` et un UUID inexistant ; cliquer « Retour à l'accueil » | Page 404 ; retour vers l'espace équipe | Conforme en local puis sur staging (22/11/2026, 85/85) pour les deux routes équipe ; retour conservé. | Playwright `access.spec.ts` | À exécuter |
 | R-06 | US-04 | Création automatique du profil à l'inscription | Parent invité | Créer un compte via le lien d'invitation | Un profil `parent` est créé et lié à `family_members` | Conforme en base (tests SQL de la phase 4) et lors du parcours d'invitation réel du 21/11/2026 | SQL ; Manuel | À exécuter |
 
@@ -26,7 +26,7 @@ Version du 22/11/2026. Dépôt : branche `staging`, commit de référence `bcf84
 
 | ID | US | Objectif | Prérequis | Étapes | Résultat attendu | Résultat obtenu (staging, 22/11/2026) | Preuve | Production |
 |---|---|---|---|---|---|---|---|---|
-| R-10 | US-06 | Liste des enfants | Compte staff | Ouvrir la liste | 30 enfants affichés | Conforme | Playwright `children.spec.ts` | À exécuter |
+| R-10 | US-06 | Liste des enfants | Compte staff | Ouvrir la liste | 30 enfants affichés | Conforme | Playwright `children.spec.ts` | Conforme (manuel, 22/11/2026) : 30 enfants visibles côté staff ; déclaré sans capture |
 | R-11 | US-07, US-08 | Recherche et filtre par section | Compte staff | Rechercher sans accent ni casse ; effacer ; filtrer par section | Résultats corrects ; filtres effaçables | Conforme | Playwright `children.spec.ts` | À exécuter |
 | R-12 | US-09, US-15 | Fiche enfant et autorisation médicament | Compte staff | Ouvrir la fiche de Léa puis de Hugo | Informations et autorisation affichées ; Hugo : médicament non autorisé | Conforme | Playwright `children.spec.ts` | À exécuter |
 | R-13 | US-10 | Chronologie du jour et formulaire | Compte staff | Ouvrir la fiche de Léa | Chronologie du jour et formulaire visibles | Conforme | Playwright `children.spec.ts` | À exécuter |
@@ -53,12 +53,12 @@ Version du 22/11/2026. Dépôt : branche `staging`, commit de référence `bcf84
 
 | ID | US | Objectif | Prérequis | Étapes | Résultat attendu | Résultat obtenu (staging, 22/11/2026) | Preuve | Production |
 |---|---|---|---|---|---|---|---|---|
-| R-30 | US-21 | Liste des enfants du parent | Compte Parent Un | Ouvrir `/parent` | Léa et Hugo seulement, avec le dernier événement du jour | Conforme | Playwright `parent.spec.ts` | À exécuter |
+| R-30 | US-21 | Liste des enfants du parent | Compte Parent Un | Ouvrir `/parent` | Léa et Hugo seulement, avec le dernier événement du jour | Conforme | Playwright `parent.spec.ts` | Conforme (manuel, 22/11/2026) : Parent Un voit Léa et Hugo uniquement ; déclaré sans capture |
 | R-31 | US-22, US-17 | Chronologie et sélecteur de date | Compte Parent Un | Ouvrir la fiche de Léa ; changer de date ; revenir à aujourd'hui | Événement du jour avec son auteur ; retour fonctionnel | Conforme | Playwright `parent.spec.ts` | À exécuter |
 | R-32 | US-22, US-29 | Date invalide dans l'URL | Compte Parent Un | Ouvrir une date invalide | Retour sur aujourd'hui sans erreur | Conforme | Playwright `parent.spec.ts` | À exécuter |
 | R-33 | US-23 | Enfant d'une autre famille, inexistant, invalide | Compte Parent Un | Ouvrir la fiche de Jade, un UUID inexistant, `abc` | Redirection vers `/parent`, aucune donnée visible | Conforme | Playwright `parent.spec.ts` | À exécuter |
 | R-34 | US-23, US-31 | Appel direct à l'API avec les droits du parent | Compte Parent Un | Interroger enfants, événements, messages de Jade | Aucune donnée d'une autre famille ; écriture forgée refusée | Conforme | Playwright `parent.spec.ts` | À exécuter |
-| R-35 | US-23 | Isolation côté Parent Deux | Compte Parent Deux | Parcourir liste, historique, formulaire ; appeler l'API pour Léa | Jade seulement ; aucune donnée de la famille 1 | Conforme | Playwright `parent.spec.ts` | À exécuter |
+| R-35 | US-23 | Isolation côté Parent Deux | Compte Parent Deux | Parcourir liste, historique, formulaire ; appeler l'API pour Léa | Jade seulement ; aucune donnée de la famille 1 | Conforme | Playwright `parent.spec.ts` | Partiel (manuel, 22/11/2026) : Parent Deux voit Jade uniquement ; appel API non rejoué ; déclaré sans capture |
 | R-36 | US-31 | Politiques RLS en base | Projet Supabase | Rejouer `05_tests_isolation.sql` | 57 tests, 0 échec (non connecté, parents 1 et 2, staff) | Conforme (22/11/2026) | SQL | À exécuter sur `lespetitspas-prod` |
 
 ## 5. Emails (Resend)
@@ -76,7 +76,7 @@ Version du 22/11/2026. Dépôt : branche `staging`, commit de référence `bcf84
 
 | ID | US | Objectif | Prérequis | Étapes | Résultat attendu | Résultat obtenu (staging, 22/11/2026) | Preuve | Production |
 |---|---|---|---|---|---|---|---|---|
-| R-50 | BN-01, BN-02 | Encart du jour | Compte Parent Un | Ouvrir la fiche de Léa | « Livre du soir » avec un livre, ou « Suggestion indisponible » ; la chronologie reste utilisable | Conforme (livre : *The Gruffalo*, Julia Donaldson) ; contrôle visuel sur ordinateur | Playwright `evening-book.spec.ts` ; Manuel | À exécuter |
+| R-50 | BN-01, BN-02 | Encart du jour | Compte Parent Un | Ouvrir la fiche de Léa | « Livre du soir » avec un livre, ou « Suggestion indisponible » ; la chronologie reste utilisable | Conforme (livre : *The Gruffalo*, Julia Donaldson) ; contrôle visuel sur ordinateur | Playwright `evening-book.spec.ts` ; Manuel | Conforme (manuel, 22/11/2026) : encart « Livre du soir » ou « Suggestion indisponible » constaté ; déclaré sans capture |
 | R-51 | BN-01 | Cache quotidien partagé | R-50 exécuté | Recharger ; ouvrir la page de Jade | Même suggestion ; une seule ligne dans `evening_books` | Conforme | Playwright ; SQL (1 ligne) | À exécuter |
 | R-52 | BN-01 | Pas d'encart sur une date passée | Compte Parent Un | Ouvrir `?date=2000-01-01` | Aucun encart, aucun appel externe | Conforme | Playwright | À exécuter |
 | R-53 | BN-02 | Cas limites de l'API (aucun résultat, donnée manquante, délai dépassé) | — | Exécuter les tests unitaires de `lib/books` | Aucune erreur visible ; repli prévu | Conforme (53 tests unitaires Node, 22/11/2026) ; non simulé en navigateur | Tests unitaires | À exécuter |
@@ -88,7 +88,7 @@ Version du 22/11/2026. Dépôt : branche `staging`, commit de référence `bcf84
 | R-60 | US-30 | Pas de débordement horizontal à 320 px et sur ordinateur | Comptes staff et Parent Un | Parcourir connexion, liste, fiche, messages, timeline parent | Aucun débordement | Conforme (8 écrans, 2 formats) ; contrôle visuel humain limité à l'ordinateur | Playwright `layout.spec.ts` ; Manuel | À exécuter |
 | R-61 | US-29 | États vides : parent sans enfant rattaché, historique vide | Parent sans enfant | Ouvrir l'accueil et la messagerie | Message « Aucun enfant n'est rattaché à votre compte. » | Conforme en local puis sur staging (22/11/2026, 85/85) : compte parent temporaire TEST-E2E- sans rattachement ; message affiché sur `/parent` et `/parent/messages`, historique vide. Compte, profil et rattachements vérifiés absents après nettoyage. | Playwright `empty-parent.spec.ts` | À exécuter |
 | R-62 | US-29 | Erreur réseau avec « Réessayer » | — | Couper le réseau | Message et bouton « Réessayer » | Non automatisé : l'erreur est produite par une lecture serveur Supabase ; couper le réseau du navigateur ne provoque pas cette erreur serveur. Pas de point d'entrée de panne en production et aucun test destructif de panne de service exécuté. `app/error.tsx` et `RetryChildrenButton` relus. | — | À exécuter |
-| R-63 | US-33 | Séparation des environnements | — | Vérifier variables et bases par environnement | Staging sur `lespetitspas`, production sur `lespetitspas-prod` | Variables de Preview contrôlées sur capture le 22/11/2026 ; Production non configurée | Manuel | À exécuter |
+| R-63 | US-33 | Séparation des environnements | — | Vérifier variables et bases par environnement | Staging sur `lespetitspas`, production sur `lespetitspas-prod` | Variables de Preview contrôlées sur capture le 22/11/2026 ; Production non configurée | Manuel | Conforme en configuration (22/11/2026) : 7 variables Vercel limitées à Production, Site URL et Redirect URL Supabase prod sur `lespetitspas-lilac.vercel.app`, structure prod identique à staging (empreintes de politiques, droits, colonnes, contraintes, fonctions égales), déploiement `28a36a2` Ready ; correspondance des clés avec `lespetitspas-prod` non vérifiable sans lire les secrets, confirmée indirectement par les connexions prod |
 | R-64 | US-34 | Suite Playwright verte | Staging à jour | `pnpm exec playwright test` avec `E2E_BASE_URL` | 0 échec | Conforme : 84/84 sur staging (22/11/2026, commit `bcf84f1`) ; 85/85 en local puis 85/85 sur staging (22/11/2026, déploiements Vercel Ready jusqu'au commit `f012023`, lot 8A inclus) | Playwright | À rejouer en production |
 | R-65 | US-36 | Absence de secret dans le dépôt | — | Contrôler `.gitignore`, fichiers suivis, historique | Aucune clé ; clés sensibles côté serveur uniquement | Conforme (22/11/2026) ; variables Vercel `Sensitive` | Manuel (lecture seule) | À exécuter |
 

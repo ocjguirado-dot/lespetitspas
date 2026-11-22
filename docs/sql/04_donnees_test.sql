@@ -1,6 +1,7 @@
 -- =====================================================================
 -- Les Petits Pas - Phase 4, Étape 5 : comptes de test + données FICTIVES
--- Cible : projet Supabase `lespetitspas` (local + staging) UNIQUEMENT.
+-- Cible : `lespetitspas` (local + staging) et, pour la recette et la démonstration,
+--         `lespetitspas-prod` (données 100 % fictives, comptes de test dédiés, mots de passe distincts de staging).
 -- Prérequis : les 3 utilisateurs existent (Authentication > Users > Add user) :
 --   oc.jguirado+staff@gmail.com, oc.jguirado+parent1@gmail.com, oc.jguirado+parent2@gmail.com
 -- Contenu : staff promu, 30 enfants fictifs (3 sections x 10), familles,
