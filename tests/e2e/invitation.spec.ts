@@ -1,7 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { AUTH, cleanupTestAccounts, LEA_ID, VISITOR } from "./helpers";
 
-const ADAM_ID = "a90e856e-24f6-4661-9eed-84b7f0c8cccd"; // enfant sans parent rattaché
+// Valeur de staging par défaut ; en production, définir E2E_ADAM_ID (autre base, autre UUID).
+const ADAM_ID = process.env.E2E_ADAM_ID ?? "a90e856e-24f6-4661-9eed-84b7f0c8cccd"; // enfant sans parent rattaché
 const invalidLink = "/auth/confirm?token_hash=jeton-invalide&type=invite&next=/auth/set-password";
 // Adresse fictive : Supabase crée un compte non confirmé ; l'email part vers EMAIL_TEST_RECIPIENT.
 const inviteEmail = `test-e2e-invite-${Date.now()}@example.com`;
