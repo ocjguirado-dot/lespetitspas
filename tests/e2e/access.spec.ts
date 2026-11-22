@@ -45,7 +45,7 @@ test.describe("compte staff", () => {
   });
 
   test("404 : identifiant invalide et UUID inexistant", async ({ page }) => {
-    for (const path of ["/staff/messages/abc", `/staff/messages/${NIL_UUID}`]) {
+    for (const path of ["/staff/messages/abc", `/staff/messages/${NIL_UUID}`, "/staff/children/abc", `/staff/children/${NIL_UUID}`]) {
       await page.goto(path);
       await expect(page.getByRole("heading", { name: "Page introuvable" })).toBeVisible();
     }

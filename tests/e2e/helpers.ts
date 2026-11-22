@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { randomUUID } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 
 export const LEA_ID = "4ae88cb7-27ef-4eab-ad19-876e25dbc123"; // autorisée pour les médicaments
@@ -14,6 +15,77 @@ export const VISITOR = { cookies: [], origins: [] };
 /** Étiquette unique par exécution : sert à retrouver (et à nettoyer) les données de test. */
 export function tag(label: string) {
   return `TEST-E2E-${label}-${Date.now()}`;
+}
+
+function serviceRoleClient() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error("Variables Supabase de test manquantes.");
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+/** Crée un compte parent isolé pour vérifier les états sans rattachement. */
+export async function createParentWithoutChildren() {
+  const supabase = serviceRoleClient();
+  const email = `${tag("parent-vide")}@example.test`;
+  const password = `E2E-${randomUUID()}-Aa1!`;
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+  });
+  if (error || !data.user) throw new Error("Création du compte parent de test impossible.");
+  return { email, password };
+}
+
+/** Supprime les rattachements et comptes de test, uniquement pour le préfixe TEST-E2E-. */
+export async function cleanupTestAccounts() {
+  const supabase = serviceRoleClient();
+  const matchingUsers: Array<{ id: string }> = [];
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) throw new Error("Nettoyage des comptes de test impossible.");
+    const users = data.users;
+    matchingUsers.push(...users.flatMap((user) => {
+      const email = user.email?.toLowerCase();
+      return email?.startsWith("test-e2e-") ? [{ id: user.id }] : [];
+    }));
+    if (users.length < 1000) break;
+  }
+
+  const { data: members, error: membersError } = await supabase
+    .from("family_members")
+    .select("id, parent_email");
+  if (membersError) throw new Error("Nettoyage des rattachements de test impossible.");
+  for (const member of members) {
+    if (member.parent_email?.toLowerCase().startsWith("test-e2e-")) {
+      const { error } = await supabase.from("family_members").delete().eq("id", member.id);
+      if (error) throw new Error("Nettoyage des rattachements de test impossible.");
+    }
+  }
+  for (const user of matchingUsers) {
+    const { error } = await supabase.auth.admin.deleteUser(user.id);
+    if (error) throw new Error("Nettoyage des comptes de test impossible.");
+  }
+
+  const { data: remainingMembers, error: verifyMembersError } = await supabase
+    .from("family_members")
+    .select("id, parent_email")
+    .ilike("parent_email", "test-e2e-%");
+  const { data: remainingProfiles, error: verifyProfilesError } = await supabase
+    .from("profiles")
+    .select("id, email")
+    .ilike("email", "test-e2e-%");
+  if (verifyMembersError || verifyProfilesError || remainingMembers.length > 0 || remainingProfiles.length > 0) {
+    throw new Error("La vérification du nettoyage des données de test a échoué.");
+  }
+  for (let page = 1; ; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || data.users.some((user) => user.email?.toLowerCase().startsWith("test-e2e-"))) {
+      throw new Error("La vérification du nettoyage des comptes de test a échoué.");
+    }
+    if (data.users.length < 1000) break;
+  }
 }
 
 /** Crée un message « nouveau » au nom de Parent Un pour Léa, via l'API avec ses droits (RLS). */

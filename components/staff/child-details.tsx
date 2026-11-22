@@ -11,6 +11,7 @@ import { UnreadMessageCount, UnreadMessageCountLoading } from "@/components/staf
 import { ParentInvitationForm } from "@/components/staff/parent-invitation-form";
 import { createClient } from "@/lib/supabase/server";
 import { readParentAccountStatuses } from "@/lib/supabase/admin";
+import { isUuid } from "@/lib/messages/status.mjs";
 
 type FamilyMember = { parent_email: string; parent_id: string | null };
 type ParentProfile = { id: string; first_name: string; last_name: string };
@@ -24,6 +25,7 @@ export async function ChildDetails({
 }) {
   const { id } = await params;
   await connection();
+  if (!isUuid(id)) notFound();
 
   let child: ChildSummary & { allergies: string | null; medication_authorized: boolean };
   let familyMembers: FamilyMember[];
