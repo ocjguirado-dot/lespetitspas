@@ -59,7 +59,7 @@ Version du 22/11/2026 (colonne Production : suite Playwright 85/85 en deux exéc
 | R-33 | US-23 | Enfant d'une autre famille, inexistant, invalide | Compte Parent Un | Ouvrir la fiche de Jade, un UUID inexistant, `abc` | Redirection vers `/parent`, aucune donnée visible | Conforme | Playwright `parent.spec.ts` | Conforme (Playwright prod, 22/11/2026) |
 | R-34 | US-23, US-31 | Appel direct à l'API avec les droits du parent | Compte Parent Un | Interroger enfants, événements, messages de Jade | Aucune donnée d'une autre famille ; écriture forgée refusée | Conforme | Playwright `parent.spec.ts` | Conforme (Playwright prod, 22/11/2026) |
 | R-35 | US-23 | Isolation côté Parent Deux | Compte Parent Deux | Parcourir liste, historique, formulaire ; appeler l'API pour Léa | Jade seulement ; aucune donnée de la famille 1 | Conforme | Playwright `parent.spec.ts` | Conforme (Playwright prod, 22/11/2026) ; contrôle manuel du même jour aussi effectué |
-| R-36 | US-31 | Politiques RLS en base | Projet Supabase | Rejouer `05_tests_isolation.sql` | 57 tests, 0 échec (non connecté, parents 1 et 2, staff) | Conforme (22/11/2026) | SQL | À exécuter sur `lespetitspas-prod` |
+| R-36 | US-31 | Politiques RLS en base | Projet Supabase | Rejouer `05_tests_isolation.sql` | 57 tests, 0 échec (non connecté, parents 1 et 2, staff) | Conforme (22/11/2026) | SQL | Conforme (23/11/2026) : 57 tests, 0 échec sur `lespetitspas-prod` (capture SQL Editor) ; base revenue à l'état initial (9 événements, 4 messages, 30 enfants, aucun résidu `TEST-`) |
 
 ## 5. Emails (Resend)
 
