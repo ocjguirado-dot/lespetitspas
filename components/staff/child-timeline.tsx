@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { connection } from "next/server";
 import { Card } from "@/components/ui/card";
+import { AddEventPromptButton } from "@/components/staff/add-event-prompt-button";
 import { RetryChildrenButton } from "@/components/staff/retry-children-button";
 import {
   formatParisDate,
@@ -237,7 +238,14 @@ export async function ChildTimeline({
             <div className="mt-3"><RetryChildrenButton /></div>
           </div>
         ) : events.length === 0 ? (
-          <p className="w-full rounded-lg bg-muted/60 p-4 text-sm">Aucun événement ce jour-là.</p>
+          date === today ? (
+            <div className="w-full space-y-3 rounded-lg bg-muted/60 p-4">
+              <p className="text-sm">Aucun événement enregistré aujourd’hui. Ajoutez le premier moment de la journée pour les parents.</p>
+              <AddEventPromptButton childId={childId} />
+            </div>
+          ) : (
+            <p className="w-full rounded-lg bg-muted/60 p-4 text-sm">Aucun événement ce jour-là.</p>
+          )
         ) : (
           <ol className="w-full space-y-3">
             {events.map((event) => (
