@@ -83,7 +83,7 @@ export async function ChildDetails({
   return (
     <div className="space-y-6">
       <Link
-        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4"
         href="/staff"
       >
         Retour à la liste
@@ -110,7 +110,7 @@ export async function ChildDetails({
           </span>
         )}
         <div className="min-w-0">
-          <h1 className="font-heading text-2xl font-semibold text-foreground">{fullName}</h1>
+          <h2 className="font-heading text-2xl font-semibold text-foreground">{fullName}</h2>
           <p className="mt-1 text-muted-foreground">{sectionLabels[child.section]}</p>
         </div>
       </header>

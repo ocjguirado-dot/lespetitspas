@@ -84,7 +84,7 @@ export async function MessageDetails({ params }: { params: Promise<{ id: string 
   return (
     <div className="space-y-4">
       <Link
-        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4"
         href="/staff/messages"
       >
         Retour aux messages

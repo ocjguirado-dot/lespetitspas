@@ -35,7 +35,7 @@ function DateControls({ childId, date }: { childId: string; date: string }) {
           Afficher
         </button>
       </form>
-      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" href={path}>
+      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4" href={path}>
         Aujourd’hui
       </Link>
     </div>
@@ -130,7 +130,7 @@ export async function ParentChildTimeline({ params, searchParams }: TimelinePara
 
   return (
     <section aria-labelledby="parent-timeline-heading" className="space-y-4">
-      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" href="/parent">
+      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4" href="/parent">
         Retour à mes enfants
       </Link>
       <h2 className="font-heading text-xl font-semibold text-foreground" id="parent-timeline-heading">Journée de {child.first_name}</h2>

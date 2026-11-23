@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { LoginForm } from "@/components/auth/login-form";
 import { getCurrentRole } from "@/lib/auth";
 
@@ -15,9 +15,9 @@ export default async function LoginPage() {
           <p className="font-heading text-sm font-semibold uppercase tracking-[0.16em] text-muted-foreground">
             Les Petits Pas
           </p>
-          <CardTitle className="font-heading text-2xl sm:text-3xl">
+          <h1 className="font-heading text-2xl leading-snug font-medium sm:text-3xl">
             Bienvenue
-          </CardTitle>
+          </h1>
           <CardDescription>
             Connectez-vous pour accéder à votre espace.
           </CardDescription>

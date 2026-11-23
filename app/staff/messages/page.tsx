@@ -7,7 +7,7 @@ export default function StaffMessagesPage() {
   return (
     <section aria-label="Messages des parents" className="space-y-4">
       <Link
-        className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4"
         href="/staff"
       >
         Retour à la liste des enfants

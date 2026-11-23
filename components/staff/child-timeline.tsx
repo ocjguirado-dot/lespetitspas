@@ -144,7 +144,7 @@ function DateControls({ childId, date }: { childId: string; date: string }) {
           Afficher
         </button>
       </form>
-      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-primary underline-offset-4 hover:underline" href={childPath}>
+      <Link className="inline-flex min-h-11 items-center text-sm font-medium text-foreground underline underline-offset-4" href={childPath}>
         Aujourd’hui
       </Link>
     </div>
