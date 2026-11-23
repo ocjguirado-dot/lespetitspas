@@ -21,7 +21,7 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 |---|---|---|
 | Cahier de recette complet (ID, objectif, prérequis, étapes, attendu, obtenu) | Atteint | `cahierrecette.md` : 49 cas, colonnes Staging et Production renseignées |
 | Anomalies classées par gravité avec statut | Atteint | `bugs.md` : 21 anomalies ; gravités et statuts renseignés |
-| Tests Playwright sur les parcours critiques, au vert | Atteint | Production le 23/11/2026 : 88 tests, **86 réussis, 2 ignorés, 0 échec** (R-64) |
+| Tests Playwright sur les parcours critiques, au vert | Atteint | Production le 23/11/2026 : 92 tests, **92 réussis, 0 ignoré, 0 échec** après la PR #8 (R-64) ; série précédente du même jour : 88 tests, 86 réussis, 2 ignorés |
 | Application en production sans bug bloquant | Atteint | Aucune anomalie bloquante ouverte (voir § 4) |
 | Isolation entre familles et entre rôles vérifiée | Atteint | `05_tests_isolation.sql` rejoué sur la production : **57 tests, 0 échec** (R-36) ; scénarios Playwright d'isolation, y compris par appels directs à l'API |
 | Interne : aucun secret dans le dépôt | Atteint | R-65 : `.env*` ignoré, aucun motif de clé dans les fichiers suivis ni dans l'historique |
@@ -41,7 +41,7 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 | **Total** | **49** | **46 conformes, 1 conforme après correction (R-66), 1 sans objet (R-53), 1 non exécuté (R-62)** |
 
 **Nature des preuves**
-- **Automatisées :** suite Playwright en production (85 tests le 22/11 en deux exécutions, puis 88 tests le 23/11 avec le nouveau spec d'accessibilité) et script SQL d'isolation (57 tests).
+- **Automatisées :** suite Playwright en production (85 tests le 22/11 en deux exécutions, puis 88 tests le 23/11 avec le nouveau spec d'accessibilité, puis 92 tests le 23/11 après la correction de l'état vide staff) et script SQL d'isolation (57 tests).
 - **Capturées :** emails reçus (invitation, relance, notification équipe), résultat du script d'isolation.
 - **Manuelles sans capture :** certains contrôles du 22/11/2026 ; ils sont signalés comme tels dans le cahier et ne sont pas présentés comme des tests automatisés.
 
