@@ -1,59 +1,87 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Les Petits Pas
 
-## Variables d’environnement
+Application web pour une crèche : l'équipe saisit la journée des enfants (repas, sieste, activité, incident, médicament), les parents la consultent et écrivent à l'équipe. Projet OpenClassrooms « Développez une application fonctionnelle grâce à la programmation agentique ».
 
-Copiez `.env.example` vers `.env.local` en local et renseignez les valeurs depuis les environnements correspondants. Pour Vercel Preview, configurer :
+- **Production :** https://lespetitspas-lilac.vercel.app
+- **Stack :** Next.js (App Router, TypeScript), Tailwind CSS et ShadCN, Supabase (base, authentification, RLS), Resend (emails), Playwright (tests de bout en bout), Vercel (hébergement), pnpm.
+- **Données :** 100 % fictives ; aucune donnée réelle d'enfant ou de famille.
 
-- `NEXT_PUBLIC_APP_URL` : URL de l’aperçu Preview.
-- `NEXT_PUBLIC_SUPABASE_URL` et `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` : projet Supabase local/staging.
-- `SUPABASE_SERVICE_ROLE_KEY` : clé serveur privée, jamais préfixée par `NEXT_PUBLIC_`.
-- `RESEND_API_KEY` et `EMAIL_FROM` : identifiants d’envoi Resend.
-- `EMAIL_TEST_RECIPIENT` : en Preview avec `onboarding@resend.dev`, adresse exacte du compte Resend autorisé ; ne pas utiliser un alias `+`.
-- `OPEN_LIBRARY_BASE_URL` : optionnelle, défaut `https://openlibrary.org`, utilisée par le bonus Livre du soir et remplaçable pour simuler une indisponibilité.
+## Fonctionnalités
 
-Les valeurs de `.env.example` sont fictives et ne permettent aucun envoi.
+| Rôle | Fonctionnalités |
+|---|---|
+| Équipe | Liste des 30 enfants avec recherche et filtre par section ; fiche enfant et timeline du jour avec sélecteur de date ; saisie de cinq types d'événements, médicament bloqué côté client et serveur si l'autorisation manque ; messages des parents avec statuts nouveau, lu, traité ; invitation et relance d'un parent par email |
+| Parent | Accueil limité à ses enfants ; timeline du jour avec sélecteur de date ; messagerie vers l'équipe (500 caractères maximum) et historique ; création du mot de passe depuis le lien d'invitation |
+| Bonus | « Livre du soir » : suggestion quotidienne via l'API Open Library, avec cas limites (aucun résultat, donnée manquante, délai dépassé) |
 
-Le bonus « Livre du soir » et son cache quotidien sont décrits dans [docs/featurebonus.md](docs/featurebonus.md). Son script SQL reste à relire et à exécuter manuellement.
+## Documentation
 
-## Invitation d'un parent
+| Document | Contenu |
+|---|---|
+| [`AGENTS.md`](AGENTS.md) | Règles de travail de l'agent IA : structure, conventions, sécurité, mise à jour du backlog |
+| [`backlog.md`](backlog.md) | Product Backlog : 39 entrées (36 user stories et 3 du bonus), critères d'acceptation, statuts et preuves |
+| [`docs/datamodel.md`](docs/datamodel.md) | Modèle de données (diagramme Mermaid), droits et politiques RLS |
+| [`docs/featurebonus.md`](docs/featurebonus.md) | Bonus « Livre du soir » |
+| [`docs/recette/cahierrecette.md`](docs/recette/cahierrecette.md) | Cahier de recette : 49 cas, résultats en staging et en production |
+| [`docs/recette/bugs.md`](docs/recette/bugs.md) | Suivi des anomalies par gravité et statut |
+| [`docs/recette/pvrecette.md`](docs/recette/pvrecette.md) | Procès-verbal de recette et décision Go / NoGo |
+| [`docs/sql/`](docs/sql) | Scripts SQL numérotés : tables, déclencheur d'authentification, RLS, données de test, tests d'isolation, installation de la production |
 
-Depuis la fiche d'un enfant, un membre du staff peut rattacher une adresse email puis envoyer une invitation. Le serveur crée le lien `family_members` avant de demander à Supabase Auth un `hashed_token`; l'application construit ensuite `/auth/confirm` et envoie l'email avec Resend. Aucun mot de passe n'est envoyé. Après clic, le parent confirme explicitement le lien puis choisit son mot de passe dans `/auth/set-password`.
+## Environnements
 
-Le rôle `parent` et le rattachement aux enfants sont créés par le trigger `on_auth_user_created`. Si l'adresse correspond déjà à un compte parent actif (par exemple pour une fratrie), l'enfant est rattaché à ce compte et aucun nouvel email n'est envoyé. Les pages de confirmation ne consomment pas le jeton lors du chargement : la vérification se fait au clic sur « Continuer ». Le chemin de redirection est limité à `/auth/set-password`.
+| Environnement | Branche | Base Supabase | Accès |
+|---|---|---|---|
+| Local | n'importe laquelle | `lespetitspas` (ou un projet local) | `pnpm dev` |
+| Staging | `staging` (Preview Vercel) | `lespetitspas` | protégé par Vercel |
+| Production | `main` | `lespetitspas-prod` | public |
 
-Avant d'activer les invitations, relire puis appliquer manuellement `docs/sql/08_grants_invitation.sql` afin que la clé `service_role` ait uniquement `SELECT`, `INSERT` et `DELETE` sur `public.family_members`. Ne jamais exécuter cette clé dans le navigateur. En Preview, les emails restent redirigés vers `EMAIL_TEST_RECIPIENT` par le module Resend existant. Le texte annonce une validité de 24 h : vérifier que la durée d'expiration des jetons d'invitation dans la configuration Auth Supabase est bien de 24 h, car l'application ne peut pas régler ni vérifier ce paramètre à l'exécution.
+Le passage en production se fait par Pull Request de `staging` vers `main`.
 
-## Getting Started
+## Installation locale
 
-First, run the development server:
+Prérequis : Node.js et pnpm.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local   # puis renseigner les valeurs
+pnpm dev                     # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Variables d'environnement
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Les valeurs de `.env.example` sont fictives et ne permettent aucun envoi. Ne jamais commiter `.env.local`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Rôle | Visibilité |
+|---|---|---|
+| `NEXT_PUBLIC_APP_URL` | URL de l'application (liens des emails) | publique |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Connexion Supabase côté navigateur | publiques |
+| `SUPABASE_SERVICE_ROLE_KEY` | Clé serveur privée (invitations, notifications) | **secrète**, serveur uniquement |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Envoi d'emails | **secrète** (clé), serveur uniquement |
+| `EMAIL_TEST_RECIPIENT` | Sans domaine vérifié chez Resend, tous les emails sont redirigés vers cette adresse exacte (pas d'alias `+`) | serveur |
+| `OPEN_LIBRARY_BASE_URL` | Optionnelle, défaut `https://openlibrary.org` ; remplaçable pour simuler une indisponibilité | serveur |
 
-## Learn More
+### Base de données
 
-To learn more about Next.js, take a look at the following resources:
+Les scripts de `docs/sql/` s'exécutent dans l'éditeur SQL de Supabase, dans l'ordre numérique.
+- **Nouvelle base de production :** `10_prod_install.sql` regroupe les scripts de structure (il refuse de s'exécuter si les tables existent déjà).
+- **Données fictives de test :** `04_donnees_test.sql` (30 enfants, 3 comptes de test à créer au préalable dans Authentication).
+- **Isolation :** `05_tests_isolation.sql` vérifie les politiques RLS (57 tests) et nettoie ses propres écritures.
+- **Invitations :** `08_grants_invitation.sql` donne à la clé `service_role` uniquement `SELECT`, `INSERT` et `DELETE` sur `public.family_members`. Relire avant exécution.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tests
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+node --test "lib/**/*.test.mjs"            # tests unitaires
+pnpm lint                                   # lint
+pnpm exec tsc --noEmit                      # types
+pnpm build                                  # compilation de production
+pnpm exec playwright test                   # tests de bout en bout
+```
 
-## Deploy on Vercel
+Les tests Playwright utilisent les comptes de test et la clé serveur Supabase de l'environnement ciblé. Pour cibler un environnement déployé, définir `E2E_BASE_URL` (et le contournement de la protection Vercel pour le staging). Ils écrivent des données préfixées `TEST-E2E-`, à supprimer ensuite. Le workflow GitHub `CI` exécute tests unitaires, lint, build et types à chaque push ; `playwright.yml` se lance manuellement.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Sécurité
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Les accès sont contrôlés par des politiques RLS dans Supabase : un parent ne voit que ses enfants, l'équipe voit tout. Un écran masqué ne constitue jamais une protection.
+- `SUPABASE_SERVICE_ROLE_KEY` et `RESEND_API_KEY` ne sont utilisées que côté serveur et ne portent jamais le préfixe `NEXT_PUBLIC_`.
+- Aucune donnée médicale n'est envoyée par email.
