@@ -37,7 +37,7 @@ test.describe("fiche enfant", () => {
   test("ouverture depuis la liste : informations et autorisation médicament", async ({ page }) => {
     await page.goto("/staff");
     await page.getByRole("link", { name: /Ouvrir la fiche de Léa Durand/ }).click();
-    await expect(page.getByRole("heading", { level: 1, name: "Léa Durand" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 2, name: "Léa Durand" })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Parents rattachés" })).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Autorisation médicament" }).locator("xpath=..").getByText("Autorisé", { exact: true }),

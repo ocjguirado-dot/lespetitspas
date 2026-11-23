@@ -23,7 +23,7 @@ export default async function ConfirmInvitationPage({
           <p className="text-sm text-muted-foreground">Continuez pour définir le mot de passe de votre compte.</p>
         </div>
         <ConfirmInvitationForm next={next} tokenHash={tokenHash} type={type} />
-        <Link className="text-sm text-primary underline underline-offset-4" href="/login">Aller à la connexion</Link>
+        <Link className="text-sm text-foreground underline underline-offset-4" href="/login">Aller à la connexion</Link>
       </Card>
     </main>
   );
