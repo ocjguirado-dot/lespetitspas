@@ -37,8 +37,8 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 | Sécurité et RLS (R-30 à R-36) | 7 | Conformes |
 | Emails et invitations (R-40 à R-45) | 6 | Conformes ; emails réellement reçus pour l'invitation, la relance et la notification équipe |
 | Bonus livre du soir (R-50 à R-53) | 4 | R-50 à R-52 conformes ; R-53 sans objet en production (tests unitaires de code) |
-| États vides, erreurs, qualité (R-60 à R-68) | 9 | Conformes, sauf R-62 non exécuté et R-66 conforme après correction (B-21) |
-| **Total** | **49** | **46 conformes, 1 conforme après correction (R-66), 1 sans objet (R-53), 1 non exécuté (R-62)** |
+| États vides, erreurs, qualité (R-60 à R-68) | 9 | Conformes ; R-62 exécuté en staging seulement (non rejoué en production) ; R-66 conforme après correction (B-21) |
+| **Total** | **49** | **46 conformes, 1 conforme après correction (R-66), 1 sans objet (R-53), 1 conforme en staging et non rejoué en production (R-62)** |
 
 **Nature des preuves**
 - **Automatisées :** suite Playwright en production (85 tests le 22/11 en deux exécutions, puis 88 tests le 23/11 avec le nouveau spec d'accessibilité, puis 92 tests le 23/11 après la correction de l'état vide staff) et script SQL d'isolation (57 tests).
@@ -77,8 +77,9 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 
 ## 5. Limites connues
 
-- **R-62 (erreur réseau avec « Réessayer ») non exécuté.** L'erreur vient d'une lecture serveur Supabase ; la reproduire en production exigerait une panne ou un test destructif. Couverture limitée à la relecture de `app/error.tsx` et du bouton de nouvelle tentative.
-- **US-29 et US-30 acceptées comme limites connues.** US-29 (gestion d'erreur avec « Réessayer ») repose sur R-62, non exécuté ; US-30 (navigation par barre latérale et barre du bas) n'a pas fait l'objet d'une vérification dédiée, même si les parcours critiques traversent ces navigations. Ces deux points seront approfondis après la soutenance.
+- **R-62 (état d'erreur avec « Réessayer ») exécuté en staging, non rejoué en production.** Le 23/11/2026, une panne de lecture ciblée (retrait temporaire du droit sur les colonnes `details` et `note` de `events`) a fait apparaître le message d'erreur et le bouton ; un clic pendant la panne laisse l'erreur affichée, et après rétablissement du droit un clic recharge la chronologie. Le test n'est pas rejoué en production car il modifie des droits en base ; le code déployé est identique.
+- **Couplage `profiles` → `events`.** La politique `profiles_select_event_authors` lit `events` pour autoriser la lecture du prénom des auteurs. Si l'accès à `events` est totalement coupé, la lecture de `profiles` échoue aussi et la connexion devient impossible (constaté lors d'un premier essai de R-62, droit rétabli ensuite). Le comportement est sûr (accès refusé, pas d'accès indu) ; il est assumé et à connaître en cas de panne réelle de cette table.
+- **US-29 et US-30 acceptées comme limites connues.** US-29 (états vides et erreur avec « Réessayer ») est vérifiée en staging (R-61, R-62, R-69), R-62 n'étant pas rejoué en production ; US-30 (navigation par barre latérale et barre du bas) n'a pas fait l'objet d'une vérification dédiée, même si les parcours critiques traversent ces navigations. Ces deux points seront approfondis après la soutenance.
 - **Pas de réponse de l'équipe dans l'application.** La messagerie est unidirectionnelle (parent vers équipe, statuts nouveau, lu, traité), conformément au périmètre officiel. Le prototype Figma Make montrait des réponses de l'équipe dans l'historique du parent : écart assumé et amélioration prioritaire, car elle exige une évolution du modèle de données et des politiques RLS, donc une nouvelle recette. Les réponses se font hors application.
 - **Expiration réelle de 24 h du lien d'invitation non observée.** Le réglage est vérifié (86 400 s), l'expiration elle-même n'a pas été attendue.
 - **Rattachement d'un parent à un deuxième enfant (fratrie) non testé en exécution ;** le code a seulement été relu.
@@ -95,7 +96,7 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 1. **Les critères officiels de la phase 8 sont atteints** : cahier complet, anomalies classées, Playwright au vert en production (0 échec), PV, isolation vérifiée.
 2. **Aucune anomalie bloquante n'est ouverte.** Les deux défauts majeurs de la recette (B-02, B-21) sont corrigés et revérifiés en production.
 3. **L'isolation des données**, risque principal pour une application contenant des données d'enfants, est vérifiée à trois niveaux : politiques RLS en base (57 tests sur la production), scénarios Playwright incluant des URL trafiquées et des appels API directs, et absence de secret côté client.
-4. **Les limites sont connues et assumées.** Elles concernent la robustesse en cas de panne (R-62) et des cas rares (fratrie, expiration à 24 h), et non les parcours critiques.
+4. **Les limites sont connues et assumées.** Elles concernent la robustesse en cas de panne (R-62 vérifié en staging seulement) et des cas rares (fratrie, expiration à 24 h), et non les parcours critiques.
 
 **Condition avant toute exploitation réelle :** vérifier un domaine d'envoi chez Resend (B-19) et traiter B-11 (réinitialisation de mot de passe) ; la production ne doit pas accueillir de données réelles d'enfants avant ces deux points.
 
