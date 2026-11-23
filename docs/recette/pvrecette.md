@@ -78,6 +78,7 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 ## 5. Limites connues
 
 - **R-62 (erreur réseau avec « Réessayer ») non exécuté.** L'erreur vient d'une lecture serveur Supabase ; la reproduire en production exigerait une panne ou un test destructif. Couverture limitée à la relecture de `app/error.tsx` et du bouton de nouvelle tentative.
+- **US-29 et US-30 acceptées comme limites connues.** US-29 (gestion d'erreur avec « Réessayer ») repose sur R-62, non exécuté ; US-30 (navigation par barre latérale et barre du bas) n'a pas fait l'objet d'une vérification dédiée, même si les parcours critiques traversent ces navigations. Ces deux points seront approfondis après la soutenance.
 - **Expiration réelle de 24 h du lien d'invitation non observée.** Le réglage est vérifié (86 400 s), l'expiration elle-même n'a pas été attendue.
 - **Rattachement d'un parent à un deuxième enfant (fratrie) non testé en exécution ;** le code a seulement été relu.
 - **Emails uniquement vers l'adresse de test** (B-19) : aucun envoi vers un destinataire réel n'a été vérifié.
