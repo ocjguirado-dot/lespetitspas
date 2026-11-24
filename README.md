@@ -19,7 +19,7 @@ Application web pour une crèche : l'équipe saisit la journée des enfants (rep
 | Document | Contenu |
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | Règles de travail de l'agent IA : structure, conventions, sécurité, mise à jour du backlog |
-| [`backlog.md`](backlog.md) | Product Backlog : 39 entrées (36 user stories et 3 du bonus), critères d'acceptation, statuts et preuves |
+| [`backlog.md`](backlog.md) | Product Backlog : 41 entrées (38 user stories et 3 du bonus), critères d'acceptation, statuts et preuves |
 | [`docs/datamodel.md`](docs/datamodel.md) | Modèle de données (diagramme Mermaid), droits et politiques RLS |
 | [`docs/featurebonus.md`](docs/featurebonus.md) | Bonus « Livre du soir » |
 | [`docs/recette/cahierrecette.md`](docs/recette/cahierrecette.md) | Cahier de recette : 51 cas, résultats en staging et en production |
