@@ -22,7 +22,7 @@ Application web pour une crèche : l'équipe saisit la journée des enfants (rep
 | [`backlog.md`](backlog.md) | Product Backlog : 39 entrées (36 user stories et 3 du bonus), critères d'acceptation, statuts et preuves |
 | [`docs/datamodel.md`](docs/datamodel.md) | Modèle de données (diagramme Mermaid), droits et politiques RLS |
 | [`docs/featurebonus.md`](docs/featurebonus.md) | Bonus « Livre du soir » |
-| [`docs/recette/cahierrecette.md`](docs/recette/cahierrecette.md) | Cahier de recette : 49 cas, résultats en staging et en production |
+| [`docs/recette/cahierrecette.md`](docs/recette/cahierrecette.md) | Cahier de recette : 51 cas, résultats en staging et en production |
 | [`docs/recette/bugs.md`](docs/recette/bugs.md) | Suivi des anomalies par gravité et statut |
 | [`docs/recette/pvrecette.md`](docs/recette/pvrecette.md) | Procès-verbal de recette et décision Go / NoGo |
 | [`docs/sql/`](docs/sql) | Scripts SQL numérotés : tables, déclencheur d'authentification, RLS, données de test, tests d'isolation, installation de la production |
