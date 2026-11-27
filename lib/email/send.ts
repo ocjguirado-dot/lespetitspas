@@ -14,7 +14,6 @@ type StaffMessageNotification = {
   messageId: string;
   parentFirstName: string;
   childFirstName: string;
-  body: string;
 };
 
 type ParentInvitationNotification = {
@@ -64,7 +63,6 @@ export async function sendStaffMessageNotification(
     const content = buildMessageNotification({
       parentFirstName: message.parentFirstName,
       childFirstName: message.childFirstName,
-      body: message.body,
       appUrl,
       testRecipient,
     });
