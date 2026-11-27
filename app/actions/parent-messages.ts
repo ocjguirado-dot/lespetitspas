@@ -89,7 +89,6 @@ export async function sendParentMessage(childId: string, body: string): Promise<
             messageId,
             parentFirstName,
             childFirstName,
-            body: validation.body,
           });
         } catch {
           logNotification("error", "notification-context-read-failed");
