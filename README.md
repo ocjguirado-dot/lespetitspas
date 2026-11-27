@@ -84,4 +84,4 @@ Les tests Playwright utilisent les comptes de test et la clé serveur Supabase d
 
 - Les accès sont contrôlés par des politiques RLS dans Supabase : un parent ne voit que ses enfants, l'équipe voit tout. Un écran masqué ne constitue jamais une protection.
 - `SUPABASE_SERVICE_ROLE_KEY` et `RESEND_API_KEY` ne sont utilisées que côté serveur et ne portent jamais le préfixe `NEXT_PUBLIC_`.
-- Aucune donnée médicale n'est envoyée par email.
+- Aucune donnée médicale ni aucun contenu des messages des parents n'est envoyé par email : la notification à l'équipe signale seulement l'arrivée d'un message et renvoie vers la messagerie.

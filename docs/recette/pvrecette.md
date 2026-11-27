@@ -1,6 +1,6 @@
 # Procès-verbal de recette — Les Petits Pas
 
-Version du 24/11/2026. Ce document justifie la décision de mise en production. Il s'appuie sur `cahierrecette.md` (51 cas) et `bugs.md` (anomalies). Chaque résultat est rattaché à une exécution réelle ; les contrôles manuels sont distingués des tests automatisés.
+Version du 27/11/2026. Ce document justifie la décision de mise en production. Il s'appuie sur `cahierrecette.md` (51 cas) et `bugs.md` (anomalies). Chaque résultat est rattaché à une exécution réelle ; les contrôles manuels sont distingués des tests automatisés.
 
 ## 1. Périmètre et environnements
 
@@ -35,7 +35,7 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 | Vue équipe : enfants, événements, messages (R-10 à R-18) | 9 | Conformes |
 | Vue parent et messagerie (R-20 à R-27) | 8 | Conformes |
 | Sécurité et RLS (R-30 à R-36) | 7 | Conformes |
-| Emails et invitations (R-40 à R-45) | 6 | Conformes ; emails réellement reçus pour l'invitation, la relance et la notification équipe |
+| Emails et invitations (R-40 à R-45) | 6 | Conformes ; emails réellement reçus pour l'invitation, la relance et la notification équipe ; notification équipe rejouée le 27/11/2026 après retrait de l'extrait (RGPD) |
 | Bonus livre du soir (R-50 à R-53) | 4 | R-50 à R-52 conformes ; R-53 sans objet en production (tests unitaires de code) |
 | États vides, erreurs, chargement, qualité (R-60 à R-70) | 11 | Conformes ; R-62 (erreur) et R-70 (chargement) exécutés en staging seulement (non rejoués en production) ; R-66 conforme après correction (B-21) |
 | **Total** | **51** | **47 conformes, 1 conforme après correction (R-66), 1 sans objet (R-53), 2 conformes en staging et non rejoués en production (R-62, R-70)** |
@@ -63,6 +63,7 @@ Critères officiels de la phase 8, auxquels s'ajoutent deux critères que je me 
 | B-15 | Mineure | Longueur minimale du mot de passe côté Supabase | Réglage de production à 8 |
 | B-16 | Mineure | Comptes de test résiduels après les tests d'invitation | Nettoyage automatique, contrôle SQL |
 | B-21 | Majeure | Production servie avec une ancienne feuille de style | Redéploiement sans cache ; rendu identique au Preview (R-66) |
+| — | — | Minimisation RGPD de l'email équipe | Décision du 27/11/2026 sur conseil du mentor : extrait retiré ; vérifications avec capture en staging et en production ; avertissement du formulaire parent conservé. |
 
 **Restantes, acceptées ou documentées**
 
